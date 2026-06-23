@@ -1,0 +1,18 @@
+Senior Software Engineer
+
+We are looking for a backend engineer with strong Python experience.
+
+Requirements:
+- 3+ years Python development
+- FastAPI or Django REST APIs
+- PostgreSQL and SQL
+- Docker and CI/CD
+- React or TypeScript frontend exposure
+- Agile team experience
+
+Nice to have:
+- AWS cloud deployments
+- Machine learning basics
+- Leadership and communication skills
+
+You will build APIs, improve data pipelines, and collaborate with product managers.

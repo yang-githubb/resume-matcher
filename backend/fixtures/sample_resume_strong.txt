@@ -1,0 +1,21 @@
+Alex Chen
+Software Engineer
+
+Summary
+Backend developer with 4 years building Python APIs and data services.
+
+Experience
+Software Engineer — FinTech Co (2021–Present)
+- Built REST APIs with FastAPI and PostgreSQL
+- Deployed services with Docker and GitHub Actions CI/CD
+- Improved query performance for SQL reporting pipelines
+
+Junior Developer — Startup Labs (2019–2021)
+- JavaScript and React dashboard features
+- Wrote unit tests and participated in Agile sprints
+
+Skills
+Python, FastAPI, SQL, PostgreSQL, Docker, Git, React, JavaScript, Agile, REST API
+
+Education
+B.S. Computer Science
