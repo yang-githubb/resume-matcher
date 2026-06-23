@@ -1,0 +1,18 @@
+# Local data
+backend/data/
+*.db
+
+# Python
+backend/.venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/.env
+.pytest_cache/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# OS
+.DS_Store
+Thumbs.db
