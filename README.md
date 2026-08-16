@@ -1,6 +1,6 @@
 # Resume Matcher
 
-Local-first resume ↔ job matcher with **hybrid scoring** (semantic embeddings + keyword overlap), **SQLite persistence**, and **Ollama explanations + follow-up chat**.
+Local-first resume ↔ job matcher with **hybrid scoring** (semantic embeddings + keyword overlap), **SQLite persistence**, **Ollama explanations + follow-up chat**, and **online job discovery** that pulls live postings from public job boards and ranks them against your resume.
 
 ## Stack
 
@@ -87,10 +87,34 @@ cd backend
 pytest -q
 ```
 
+## Find jobs online
+
+Instead of pasting postings by hand, **Find jobs online** collects your preferences
+first (role, experience level, city, country, remote-only, how many to pull, minimum
+match), then queries public job boards, ranks every result against your resume, and
+links straight to the posting.
+
+| Source | Key needed | Covers |
+|--------|-----------|--------|
+| Remotive | no | Remote roles |
+| RemoteOK | no | Remote roles |
+| Arbeitnow | no | EU roles (incl. onsite) |
+| Jobicy | no | Remote roles |
+| Adzuna | yes (free) | Onsite + remote, 19 countries |
+
+The four keyless boards work with no setup. For onsite/local roles, get a free key at
+[developer.adzuna.com](https://developer.adzuna.com/) and set `ADZUNA_APP_ID` /
+`ADZUNA_APP_KEY` in `backend/.env`.
+
+These are official public APIs, not scraped pages — LinkedIn and Indeed block
+automated access and their terms forbid it, so they are deliberately not included.
+Postings are filtered for relevance to your keywords (title-weighted) before your
+resume is scored against them.
+
 ## Using the app
 
 1. Pick **Job seeker** or **Recruiter** mode
-2. Add a **job** (file or paste)
+2. Add a **job** (file or paste), or use **Find jobs online**
 3. Add **1–2 resumes** (file or paste per slot)
 4. Click **Rank matches**
 5. Click a result for **analysis**
@@ -117,6 +141,8 @@ Tune in `backend/.env`.
 | `POST /documents/upload` | Upload PDF/DOCX |
 | `POST /documents/text` | Paste plain text |
 | `PATCH /documents/{id}` | Edit extracted text |
+| `GET /discover/sources` | List job boards + which are configured |
+| `POST /discover/match` | Search boards by preferences, rank against a resume |
 | `POST /match/rank` | Rank up to 2 resumes |
 | `GET /match/sessions/{id}` | Load session |
 | `GET /match/sessions/{id}/export` | Download markdown report |
@@ -130,6 +156,7 @@ Tune in `backend/.env`.
 resume-matcher/
 ├── backend/
 │   ├── app/           # FastAPI app
+│   │   └── sources/   # Job board adapters (one module per board)
 │   ├── fixtures/      # Sample job + resumes
 │   ├── tests/
 │   └── cli.py

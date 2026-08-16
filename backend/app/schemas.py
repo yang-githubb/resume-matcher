@@ -36,6 +36,10 @@ class MatchResultItem(BaseModel):
     resume_filename: str | None = None
     job_id: str | None = None
     job_filename: str | None = None
+    job_url: str | None = None
+    job_company: str | None = None
+    job_location: str | None = None
+    job_source: str | None = None
     score: float
     semantic_score: float
     keyword_score: float

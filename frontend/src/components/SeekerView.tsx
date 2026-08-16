@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { ChatPanel } from "@/components/ChatPanel";
+import { DiscoverPanel } from "@/components/DiscoverPanel";
 import { DocumentInput } from "@/components/DocumentInput";
 import { JobLibrary } from "@/components/JobLibrary";
 import { ResultsPanel } from "@/components/ResultsPanel";
@@ -31,24 +32,27 @@ export function SeekerView({ rankData, onRankData, onError }: SeekerViewProps) {
 
   const jobsQuery = useQuery({ queryKey: ["jobs"], queryFn: listJobs });
 
+  // Both the library flow and the online search need the resume persisted first.
+  const ensureResumeId = async (): Promise<string> => {
+    if (resumeId) return resumeId;
+    if (!resumeSource) {
+      throw new Error("Upload or paste your resume first.");
+    }
+    const doc =
+      resumeSource.kind === "file"
+        ? await uploadDocument("resume", resumeSource.file)
+        : await createTextDocument({
+            doc_type: "resume",
+            text: resumeSource.text,
+            label: resumeSource.label,
+          });
+    setResumeId(doc.id);
+    return doc.id;
+  };
+
   const matchMutation = useMutation({
     mutationFn: async () => {
-      let id = resumeId;
-      if (!id && resumeSource) {
-        const doc =
-          resumeSource.kind === "file"
-            ? await uploadDocument("resume", resumeSource.file)
-            : await createTextDocument({
-                doc_type: "resume",
-                text: resumeSource.text,
-                label: resumeSource.label,
-              });
-        id = doc.id;
-        setResumeId(id);
-      }
-      if (!id) {
-        throw new Error("Upload or paste your resume first.");
-      }
+      const id = await ensureResumeId();
 
       const jobIds =
         selectedJobIds.length > 0 ? selectedJobIds : jobsQuery.data?.map((j) => j.id);
@@ -118,6 +122,20 @@ export function SeekerView({ rankData, onRankData, onError }: SeekerViewProps) {
           </p>
         </div>
 
+        <div className="panel">
+          <h2>Find jobs online</h2>
+          <DiscoverPanel
+            ensureResumeId={ensureResumeId}
+            onResults={(data) => {
+              onRankData(data);
+              setSelectedResultId(data.results[0]?.id ?? null);
+            }}
+            onError={onError}
+          />
+        </div>
+      </section>
+
+      <section className="grid-2">
         <div className="panel">
           <JobLibrary
             selectedIds={selectedJobIds}

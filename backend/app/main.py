@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app import db
 from app.config import settings
 from app.explain.ollama import check_ollama
-from app.routes import chat, documents, match
+from app.routes import chat, discover, documents, match
 from app.schemas import HealthResponse, SessionSummary
 
 
@@ -30,6 +30,7 @@ app.add_middleware(
 app.include_router(documents.router)
 app.include_router(match.router)
 app.include_router(chat.router)
+app.include_router(discover.router)
 
 
 @app.get("/health", response_model=HealthResponse)

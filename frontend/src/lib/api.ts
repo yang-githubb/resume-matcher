@@ -1,10 +1,13 @@
 import type {
   ChatResponse,
+  DiscoverResponse,
   HealthResponse,
   JobSummary,
   ParseResponse,
   RankResponse,
+  SearchPreferences,
   SessionSummary,
+  SourceInfo,
 } from "@/types/api";
 
 const API_BASE = "/api";
@@ -94,6 +97,24 @@ export async function rankDocuments(payload: {
   explain?: boolean;
 }): Promise<RankResponse> {
   return request<RankResponse>("/match/rank", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function listSources(): Promise<SourceInfo[]> {
+  return request<SourceInfo[]>("/discover/sources");
+}
+
+export async function discoverAndMatch(payload: {
+  resume_id: string;
+  preferences: SearchPreferences;
+  explain?: boolean;
+  explain_top?: number;
+  min_score?: number;
+}): Promise<DiscoverResponse> {
+  return request<DiscoverResponse>("/discover/match", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
