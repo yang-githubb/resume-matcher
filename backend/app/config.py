@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     semantic_weight: float = 0.6
     keyword_weight: float = 0.4
 
+    # Optional: unlocks onsite/local listings via Adzuna. Free key from
+    # https://developer.adzuna.com/ - the keyless boards work without it.
+    adzuna_app_id: str = ""
+    adzuna_app_key: str = ""
+
     database_path: Path = Path("./data/resume_matcher.db")
     upload_dir: Path = Path("./data/uploads")
 

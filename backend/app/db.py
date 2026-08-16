@@ -52,6 +52,27 @@ def _migrate(conn: sqlite3.Connection) -> None:
     if "job_id" not in result_cols:
         conn.execute("ALTER TABLE match_results ADD COLUMN job_id TEXT")
 
+    # Discovered jobs carry provenance so results can link back to the posting.
+    doc_cols = _table_columns(conn, "documents")
+    for column, ddl in (
+        ("origin", "ALTER TABLE documents ADD COLUMN origin TEXT NOT NULL DEFAULT 'manual'"),
+        ("source", "ALTER TABLE documents ADD COLUMN source TEXT"),
+        ("external_id", "ALTER TABLE documents ADD COLUMN external_id TEXT"),
+        ("url", "ALTER TABLE documents ADD COLUMN url TEXT"),
+        ("company", "ALTER TABLE documents ADD COLUMN company TEXT"),
+        ("location", "ALTER TABLE documents ADD COLUMN location TEXT"),
+    ):
+        if column not in doc_cols:
+            conn.execute(ddl)
+
+    conn.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_documents_external
+        ON documents(source, external_id)
+        WHERE source IS NOT NULL AND external_id IS NOT NULL
+        """
+    )
+
 
 def init_db() -> None:
     settings.database_path.parent.mkdir(parents=True, exist_ok=True)
@@ -124,17 +145,51 @@ def insert_document(
     filename: str,
     raw_text: str,
     structured: dict[str, Any],
+    *,
+    origin: str = "manual",
+    source: str | None = None,
+    external_id: str | None = None,
+    url: str | None = None,
+    company: str | None = None,
+    location: str | None = None,
 ) -> str:
     doc_id = str(uuid4())
     with get_connection() as conn:
         conn.execute(
             """
-            INSERT INTO documents (id, doc_type, filename, raw_text, structured_json, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO documents
+            (id, doc_type, filename, raw_text, structured_json, created_at,
+             origin, source, external_id, url, company, location)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (doc_id, doc_type, filename, raw_text, json.dumps(structured), _utc_now()),
+            (
+                doc_id,
+                doc_type,
+                filename,
+                raw_text,
+                json.dumps(structured),
+                _utc_now(),
+                origin,
+                source,
+                external_id,
+                url,
+                company,
+                location,
+            ),
         )
     return doc_id
+
+
+def find_job_by_external(source: str, external_id: str) -> str | None:
+    """Return an existing document id for a posting already pulled from a board."""
+    if not source or not external_id:
+        return None
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT id FROM documents WHERE source = ? AND external_id = ?",
+            (source, external_id),
+        ).fetchone()
+    return row["id"] if row else None
 
 
 def get_document(doc_id: str) -> dict[str, Any] | None:
@@ -214,7 +269,9 @@ def get_session_results(session_id: str) -> list[dict[str, Any]]:
         if is_jobs_for_resume:
             rows = conn.execute(
                 """
-                SELECT mr.*, d.filename AS job_filename
+                SELECT mr.*, d.filename AS job_filename, d.url AS job_url,
+                       d.company AS job_company, d.location AS job_location,
+                       d.source AS job_source
                 FROM match_results mr
                 JOIN documents d ON d.id = mr.job_id
                 WHERE mr.session_id = ?
@@ -228,6 +285,10 @@ def get_session_results(session_id: str) -> list[dict[str, Any]]:
                     "resume_id": row["resume_id"],
                     "job_id": row["job_id"],
                     "job_filename": row["job_filename"],
+                    "job_url": row["job_url"],
+                    "job_company": row["job_company"],
+                    "job_location": row["job_location"],
+                    "job_source": row["job_source"],
                     "score": row["score"],
                     "semantic_score": row["semantic_score"],
                     "keyword_score": row["keyword_score"],
@@ -326,19 +387,26 @@ def update_match_explanation(result_id: str, explanation: str) -> None:
         )
 
 
-def list_jobs(limit: int = 100) -> list[dict[str, Any]]:
+def list_jobs(limit: int = 100, origin: str | None = "manual") -> list[dict[str, Any]]:
+    """List job documents.
+
+    Defaults to manually added jobs so discovered postings - which arrive in
+    bulk on every search - do not swamp the user's curated library.
+    """
+    query = """
+        SELECT id, filename, created_at
+        FROM documents
+        WHERE doc_type = 'job'
+    """
+    params: list[Any] = []
+    if origin is not None:
+        query += " AND origin = ?"
+        params.append(origin)
+    query += " ORDER BY created_at DESC LIMIT ?"
+    params.append(limit)
+
     with get_connection() as conn:
-        rows = conn.execute(
-            """
-            SELECT id, filename, created_at,
-                   json_extract(structured_json, '$.skills') AS skills_preview
-            FROM documents
-            WHERE doc_type = 'job'
-            ORDER BY created_at DESC
-            LIMIT ?
-            """,
-            (limit,),
-        ).fetchall()
+        rows = conn.execute(query, tuple(params)).fetchall()
     return [
         {
             "id": row["id"],

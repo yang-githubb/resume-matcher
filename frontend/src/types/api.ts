@@ -31,6 +31,10 @@ export interface MatchResultItem {
   resume_filename?: string | null;
   job_id?: string | null;
   job_filename?: string | null;
+  job_url?: string | null;
+  job_company?: string | null;
+  job_location?: string | null;
+  job_source?: string | null;
   score: number;
   semantic_score: number;
   keyword_score: number;
@@ -61,6 +65,36 @@ export interface SessionSummary {
   job_filename?: string | null;
   resume_filename?: string | null;
   created_at: string;
+}
+
+export interface SourceInfo {
+  name: string;
+  label: string;
+  requires_key: boolean;
+  available: boolean;
+}
+
+export interface SourceReport {
+  name: string;
+  label: string;
+  fetched: number;
+  error: string | null;
+}
+
+export interface SearchPreferences {
+  keywords: string;
+  location?: string | null;
+  seniority?: string | null;
+  remote_only: boolean;
+  country: string;
+  limit: number;
+  sources?: string[] | null;
+}
+
+export interface DiscoverResponse extends RankResponse {
+  sources: SourceReport[];
+  fetched_count: number;
+  ranked_count: number;
 }
 
 export interface HealthResponse {

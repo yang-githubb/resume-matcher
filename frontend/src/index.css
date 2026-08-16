@@ -216,14 +216,85 @@ a.btn {
 }
 
 .result-card {
-  text-align: left;
-  width: 100%;
   background: #0f1628;
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 0.8rem;
   color: inherit;
+}
+
+.result-main {
+  display: block;
+  text-align: left;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
   cursor: pointer;
+}
+
+.result-meta {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 0.15rem;
+}
+
+.apply-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--accent-2);
+  text-decoration: none;
+}
+
+.apply-link:hover {
+  text-decoration: underline;
+}
+
+.discover .field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.85rem;
+  flex: 1;
+}
+
+.discover .field input[type="text"],
+.discover .field select {
+  background: #0f1628;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.45rem 0.55rem;
+  color: inherit;
+  font: inherit;
+}
+
+.field-row {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  flex: 1;
+  margin-bottom: 0.6rem;
+}
+
+.source-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.6rem 0 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
 }
 
 .result-card.selected {
