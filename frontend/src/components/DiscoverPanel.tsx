@@ -5,15 +5,22 @@ import { discoverAndMatch, listSources } from "@/lib/api";
 import type { DiscoverResponse } from "@/types/api";
 
 const COUNTRIES = [
+  { code: "my", label: "Malaysia" },
+  { code: "sg", label: "Singapore" },
+  { code: "id", label: "Indonesia" },
+  { code: "th", label: "Thailand" },
+  { code: "ph", label: "Philippines" },
+  { code: "vn", label: "Vietnam" },
+  { code: "hk", label: "Hong Kong" },
+  { code: "jp", label: "Japan" },
+  { code: "au", label: "Australia" },
+  { code: "nz", label: "New Zealand" },
+  { code: "in", label: "India" },
   { code: "gb", label: "United Kingdom" },
   { code: "us", label: "United States" },
   { code: "ca", label: "Canada" },
-  { code: "au", label: "Australia" },
   { code: "de", label: "Germany" },
   { code: "nl", label: "Netherlands" },
-  { code: "sg", label: "Singapore" },
-  { code: "in", label: "India" },
-  { code: "nz", label: "New Zealand" },
   { code: "fr", label: "France" },
 ];
 
@@ -30,7 +37,7 @@ export function DiscoverPanel({ ensureResumeId, onResults, onError }: DiscoverPa
   const [location, setLocation] = useState("");
   const [seniority, setSeniority] = useState("");
   const [remoteOnly, setRemoteOnly] = useState(true);
-  const [country, setCountry] = useState("gb");
+  const [country, setCountry] = useState("my");
   const [limit, setLimit] = useState(25);
   const [minScore, setMinScore] = useState(0);
   const [report, setReport] = useState<DiscoverResponse | null>(null);

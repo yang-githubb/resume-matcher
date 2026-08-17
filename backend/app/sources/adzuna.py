@@ -10,11 +10,16 @@ LABEL = "Adzuna (onsite + remote, needs free API key)"
 REQUIRES_KEY = True
 ENDPOINT = "https://api.adzuna.com/v1/api/jobs/{country}/search/1"
 
-# Countries Adzuna serves; anything else falls back to gb.
+# The 18 countries Adzuna serves. Notably absent: Malaysia and most of
+# South East Asia apart from Singapore.
 COUNTRIES = {
-    "gb", "us", "au", "at", "be", "br", "ca", "ch", "de", "es",
+    "gb", "us", "au", "at", "be", "br", "ca", "de", "es",
     "fr", "in", "it", "mx", "nl", "nz", "pl", "sg", "za",
 }
+
+
+class UnsupportedCountry(ValueError):
+    """Raised so the search reports the gap instead of silently using another country."""
 
 
 def is_available() -> bool:
@@ -25,7 +30,12 @@ async def fetch(client: httpx.AsyncClient, query: JobQuery) -> list[FetchedJob]:
     if not is_available():
         return []
 
-    country = query.country.lower() if query.country.lower() in COUNTRIES else "gb"
+    country = query.country.lower()
+    if country not in COUNTRIES:
+        raise UnsupportedCountry(
+            f"Adzuna has no {country.upper()} listings - it covers "
+            f"{len(COUNTRIES)} countries, not including this one."
+        )
     params: dict[str, str | int] = {
         "app_id": settings.adzuna_app_id,
         "app_key": settings.adzuna_app_key,
