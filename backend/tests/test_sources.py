@@ -1,5 +1,6 @@
 import pytest
 
+from app.sources import adzuna, jsearch
 from app.sources.base import FetchedJob, JobQuery, html_to_text
 from app.sources.registry import _dedupe
 
@@ -72,3 +73,39 @@ def test_document_text_leads_with_title_and_company():
 )
 def test_query_terms_drops_single_characters(keywords: str, expected: list[str]):
     assert JobQuery(keywords=keywords).terms == expected
+
+
+def test_adzuna_does_not_claim_malaysia_coverage():
+    """A silent fallback would serve UK jobs to someone searching Malaysia."""
+    assert "my" not in adzuna.COUNTRIES
+    assert "sg" in adzuna.COUNTRIES
+
+
+def test_jsearch_needs_a_key_to_be_available(monkeypatch):
+    monkeypatch.setattr(jsearch.settings, "jsearch_api_key", "")
+    assert jsearch.is_available() is False
+    monkeypatch.setattr(jsearch.settings, "jsearch_api_key", "abc123")
+    assert jsearch.is_available() is True
+
+
+def test_jsearch_builds_location_from_parts_when_absent():
+    assert jsearch._location({"job_location": "Kuala Lumpur, Malaysia"}) == "Kuala Lumpur, Malaysia"
+    assert (
+        jsearch._location({"job_city": "Penang", "job_state": None, "job_country": "MY"})
+        == "Penang, MY"
+    )
+
+
+def test_jsearch_salary_needs_both_bounds():
+    assert jsearch._salary({"job_min_salary": 1000}) is None
+    assert (
+        jsearch._salary(
+            {
+                "job_min_salary": 5000,
+                "job_max_salary": 8000,
+                "job_salary_currency": "MYR",
+                "job_salary_period": "MONTH",
+            }
+        )
+        == "5000-8000 MYR MONTH"
+    )

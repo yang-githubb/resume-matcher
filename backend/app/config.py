@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     adzuna_app_id: str = ""
     adzuna_app_key: str = ""
 
+    # Optional: Google for Jobs results (covers Malaysia and most of Asia,
+    # which Adzuna does not). Free key from https://rapidapi.com/ - JSearch.
+    jsearch_api_key: str = ""
+
     database_path: Path = Path("./data/resume_matcher.db")
     upload_dir: Path = Path("./data/uploads")
 

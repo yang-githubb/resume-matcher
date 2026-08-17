@@ -6,11 +6,12 @@ from dataclasses import dataclass
 
 import httpx
 
-from app.sources import adzuna, arbeitnow, jobicy, remoteok, remotive
+from app.sources import adzuna, arbeitnow, jobicy, jsearch, remoteok, remotive
 from app.sources.base import FetchedJob, JobQuery
 
 # Order matters only for tie-breaking during dedupe: earlier sources win.
-MODULES = [remotive, remoteok, arbeitnow, jobicy, adzuna]
+# JSearch leads because it carries the original posting's apply link.
+MODULES = [jsearch, remotive, remoteok, arbeitnow, jobicy, adzuna]
 BY_NAME = {module.NAME: module for module in MODULES}
 
 REQUEST_TIMEOUT = 20.0
