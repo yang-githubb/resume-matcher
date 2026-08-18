@@ -31,46 +31,47 @@ input {
 }
 
 .app-shell {
-  max-width: 1100px;
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 2rem 1.25rem 3rem;
+  padding: 2.75rem 1.75rem 4rem;
 }
 
 .hero {
   display: flex;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 1.5rem;
   align-items: flex-start;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2.25rem;
 }
 
 .eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   color: var(--muted);
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.6rem;
 }
 
 h1 {
   margin: 0;
-  font-size: 2.2rem;
+  font-size: 2.4rem;
 }
 
 h2,
 h3 {
-  margin-top: 0;
+  margin: 0 0 0.9rem;
 }
 
 .lede {
   color: var(--muted);
-  max-width: 52ch;
+  max-width: 58ch;
+  margin-top: 0.75rem;
 }
 
 .health-pill {
   border: 1px solid var(--border);
   background: var(--panel);
-  padding: 0.6rem 0.9rem;
+  padding: 0.7rem 1.1rem;
   border-radius: 999px;
   font-size: 0.85rem;
   white-space: nowrap;
@@ -88,35 +89,39 @@ h3 {
 
 .mode-toggle {
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  gap: 0.6rem;
+  margin-bottom: 1.5rem;
 }
 
 .grid-2 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: 1.5rem;
+  margin-bottom: 1.75rem;
 }
 
 .panel {
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 1rem;
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+
+section.panel {
+  margin-bottom: 1.75rem;
 }
 
 .upload-card {
   border: 1px dashed var(--border);
   border-radius: 10px;
-  padding: 0.9rem;
-  margin-bottom: 0.75rem;
+  padding: 1.1rem;
+  margin-bottom: 1rem;
 }
 
 .upload-label {
   display: block;
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.6rem;
 }
 
 .input-header {
@@ -124,16 +129,16 @@ h3 {
   justify-content: space-between;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.6rem;
 }
 
 .mini-toggle {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.3rem;
 }
 
 .btn.small {
-  padding: 0.3rem 0.55rem;
+  padding: 0.35rem 0.65rem;
   font-size: 0.8rem;
 }
 
@@ -143,16 +148,17 @@ h3 {
   border: 1px solid var(--border);
   background: #0f1628;
   color: var(--text);
-  padding: 0.6rem 0.7rem;
+  padding: 0.7rem 0.85rem;
   resize: vertical;
-  min-height: 120px;
+  min-height: 140px;
 }
 
 .panel-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 0.5rem;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1.1rem;
 }
 
 .panel-header h2 {
@@ -170,7 +176,7 @@ a.btn {
   background: #1a2440;
   color: var(--text);
   border-radius: 8px;
-  padding: 0.55rem 0.9rem;
+  padding: 0.6rem 1.05rem;
   cursor: pointer;
 }
 
@@ -203,6 +209,7 @@ a.btn {
 .muted {
   color: var(--muted);
   font-size: 0.92rem;
+  line-height: 1.55;
 }
 
 .error {
@@ -212,18 +219,18 @@ a.btn {
 .results-list {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.9rem;
   /* A search can return 50 postings; keep the panel a fixed size. */
-  max-height: 520px;
+  max-height: 560px;
   overflow-y: auto;
-  padding-right: 0.35rem;
+  padding-right: 0.5rem;
 }
 
 .result-card {
   background: #0f1628;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 0.8rem;
+  border-radius: 12px;
+  padding: 1.1rem;
   color: inherit;
 }
 
@@ -240,14 +247,14 @@ a.btn {
 }
 
 .result-meta {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   color: var(--muted);
-  margin-top: 0.15rem;
+  margin-top: 0.3rem;
 }
 
 .apply-link {
   display: inline-block;
-  margin-top: 0.5rem;
+  margin-top: 0.7rem;
   font-size: 0.85rem;
   color: var(--accent-2);
   text-decoration: none;
@@ -260,10 +267,14 @@ a.btn {
 .discover .field {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  margin-bottom: 0.6rem;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
   font-size: 0.85rem;
   flex: 1;
+}
+
+.discover .field span:first-child {
+  color: var(--muted);
 }
 
 .discover .field input[type="text"],
@@ -271,34 +282,34 @@ a.btn {
   background: #0f1628;
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 0.45rem 0.55rem;
+  padding: 0.6rem 0.7rem;
   color: inherit;
   font: inherit;
 }
 
 .field-row {
   display: flex;
-  gap: 0.75rem;
+  gap: 1.25rem;
 }
 
 .checkbox-field {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.5rem;
   font-size: 0.85rem;
   flex: 1;
-  margin-bottom: 0.6rem;
+  margin-bottom: 1rem;
 }
 
 .source-list {
   list-style: none;
   padding: 0;
-  margin: 0.6rem 0 0;
+  margin: 1rem 0 0;
   font-size: 0.78rem;
   color: var(--muted);
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.3rem;
 }
 
 .result-card.selected {
@@ -309,7 +320,7 @@ a.btn {
 .result-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
 }
 
 .rank {
@@ -324,22 +335,22 @@ a.btn {
 
 .score-breakdown {
   display: flex;
-  gap: 1rem;
+  gap: 1.25rem;
   font-size: 0.85rem;
   color: var(--muted);
-  margin: 0.35rem 0;
+  margin: 0.6rem 0;
 }
 
 .chip-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
+  gap: 0.45rem;
   margin: 0;
 }
 
 .chip {
-  font-size: 0.75rem;
-  padding: 0.15rem 0.45rem;
+  font-size: 0.76rem;
+  padding: 0.25rem 0.6rem;
   border-radius: 999px;
   border: 1px solid var(--border);
 }
@@ -358,33 +369,34 @@ a.btn {
   white-space: pre-wrap;
   background: #0f1628;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 0.8rem;
+  border-radius: 12px;
+  padding: 1.1rem;
   font-family: inherit;
   font-size: 0.92rem;
-  max-height: 280px;
+  line-height: 1.6;
+  max-height: 320px;
   overflow: auto;
 }
 
 .chat-panel {
-  margin-top: 1rem;
+  margin-top: 1.5rem;
   border-top: 1px solid var(--border);
-  padding-top: 1rem;
+  padding-top: 1.25rem;
 }
 
 .chat-log {
   min-height: 120px;
-  max-height: 220px;
+  max-height: 240px;
   overflow: auto;
-  margin: 0.75rem 0;
+  margin: 1rem 0;
 }
 
 .chat-bubble {
   background: #0f1628;
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 0.6rem 0.75rem;
-  margin-bottom: 0.5rem;
+  padding: 0.7rem 0.9rem;
+  margin-bottom: 0.6rem;
 }
 
 .chat-bubble.user {
@@ -393,7 +405,7 @@ a.btn {
 
 .chat-input-row {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.6rem;
 }
 
 .chat-input-row input {
@@ -402,88 +414,119 @@ a.btn {
   border: 1px solid var(--border);
   background: #0f1628;
   color: var(--text);
-  padding: 0.55rem 0.7rem;
+  padding: 0.6rem 0.8rem;
 }
 
 .session-list {
   list-style: none;
   padding: 0;
   margin: 0;
-}
-
-.session-list li {
-  margin-bottom: 0.45rem;
-}
-
-.job-library h3 {
-  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .job-list {
   list-style: none;
   padding: 0;
-  margin: 0.75rem 0 0;
+  margin: 1.1rem 0 0;
 }
 
 .job-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.45rem 0;
+  gap: 1rem;
+  padding: 0.85rem 0;
   border-bottom: 1px solid var(--border);
 }
 
+.job-row:last-child {
+  border-bottom: none;
+}
+
 .scroll-list {
-  max-height: 420px;
+  max-height: 460px;
   overflow-y: auto;
-  padding-right: 0.35rem;
-}
-
-.online-row {
-  align-items: flex-start;
-}
-
-.online-main {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  min-width: 0;
-}
-
-.online-title {
-  font-size: 0.9rem;
-  overflow-wrap: anywhere;
-}
-
-.online-meta {
-  font-size: 0.78rem;
-  color: var(--muted);
-}
-
-.online-row .apply-link {
-  margin-top: 0.2rem;
+  padding-right: 0.5rem;
 }
 
 .job-check {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  align-items: flex-start;
+  gap: 0.65rem;
   flex: 1;
+  min-width: 0;
   cursor: pointer;
 }
 
+.job-check input[type="checkbox"] {
+  margin-top: 0.3rem;
+  flex-shrink: 0;
+}
+
+.job-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.job-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.job-title {
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+
+.job-meta {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.job-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.job-actions .apply-link {
+  margin-top: 0;
+}
+
+.badge {
+  font-size: 0.72rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.badge-manual {
+  border-color: #3a4a72;
+  color: #b8c6ea;
+}
+
+.badge-online {
+  border-color: #1f6f4a;
+  color: #b7f7d7;
+}
+
 .small-hint {
-  margin-top: 0.5rem;
+  margin-top: 0.6rem;
   font-size: 0.85rem;
 }
 
 .banner-error {
-  margin-bottom: 1rem;
-}
-
-.sessions-panel {
-  margin-top: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .placeholder-panel {
@@ -504,5 +547,9 @@ a.btn {
   .hero {
     grid-template-columns: 1fr;
     flex-direction: column;
+  }
+
+  .app-shell {
+    padding: 1.75rem 1.1rem 3rem;
   }
 }
