@@ -24,8 +24,15 @@ ALLOWED_SUFFIXES = {".pdf", ".docx"}
 
 
 @router.get("/jobs", response_model=list[JobSummary])
-async def list_jobs() -> list[JobSummary]:
-    return [JobSummary(**job) for job in db.list_jobs()]
+async def list_jobs(
+    origin: Literal["manual", "discovered", "all"] = "manual",
+    limit: int = 100,
+) -> list[JobSummary]:
+    """Jobs you added by hand, jobs found online, or both."""
+    return [
+        JobSummary(**job)
+        for job in db.list_jobs(limit, origin=None if origin == "all" else origin)
+    ]
 
 
 @router.delete("/{doc_id}")

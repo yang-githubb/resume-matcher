@@ -5,6 +5,7 @@ import { ChatPanel } from "@/components/ChatPanel";
 import { DiscoverPanel } from "@/components/DiscoverPanel";
 import { DocumentInput } from "@/components/DocumentInput";
 import { JobLibrary } from "@/components/JobLibrary";
+import { OnlineLibrary } from "@/components/OnlineLibrary";
 import { ResultsPanel } from "@/components/ResultsPanel";
 import {
   createTextDocument,
@@ -30,7 +31,7 @@ export function SeekerView({ rankData, onRankData, onError }: SeekerViewProps) {
   const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
   const [selectedResultId, setSelectedResultId] = useState<string | null>(null);
 
-  const jobsQuery = useQuery({ queryKey: ["jobs"], queryFn: listJobs });
+  const jobsQuery = useQuery({ queryKey: ["jobs", "manual"], queryFn: () => listJobs("manual") });
 
   // Both the library flow and the online search need the resume persisted first.
   const ensureResumeId = async (): Promise<string> => {
@@ -143,6 +144,10 @@ export function SeekerView({ rankData, onRankData, onError }: SeekerViewProps) {
             onSelectAll={setSelectedJobIds}
             disabled={matchMutation.isPending}
           />
+        </div>
+
+        <div className="panel">
+          <OnlineLibrary />
         </div>
       </section>
 

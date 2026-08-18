@@ -69,8 +69,10 @@ export async function updateDocumentText(
   });
 }
 
-export async function listJobs(): Promise<JobSummary[]> {
-  return request<JobSummary[]>("/documents/jobs");
+export async function listJobs(
+  origin: "manual" | "discovered" | "all" = "manual",
+): Promise<JobSummary[]> {
+  return request<JobSummary[]>(`/documents/jobs?origin=${origin}`);
 }
 
 export async function deleteJob(jobId: string): Promise<void> {

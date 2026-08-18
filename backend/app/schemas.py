@@ -21,6 +21,11 @@ class JobSummary(BaseModel):
     id: str
     filename: str
     created_at: str
+    origin: str = "manual"
+    source: str | None = None
+    url: str | None = None
+    company: str | None = None
+    location: str | None = None
 
 
 class MatchBreakdown(BaseModel):

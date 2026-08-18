@@ -213,6 +213,10 @@ a.btn {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
+  /* A search can return 50 postings; keep the panel a fixed size. */
+  max-height: 520px;
+  overflow-y: auto;
+  padding-right: 0.35rem;
 }
 
 .result-card {
@@ -428,6 +432,37 @@ a.btn {
   gap: 0.5rem;
   padding: 0.45rem 0;
   border-bottom: 1px solid var(--border);
+}
+
+.scroll-list {
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 0.35rem;
+}
+
+.online-row {
+  align-items: flex-start;
+}
+
+.online-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.online-title {
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.online-meta {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.online-row .apply-link {
+  margin-top: 0.2rem;
 }
 
 .job-check {

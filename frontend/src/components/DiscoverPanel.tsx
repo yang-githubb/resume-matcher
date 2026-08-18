@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { discoverAndMatch, listSources } from "@/lib/api";
 import type { DiscoverResponse } from "@/types/api";
@@ -42,6 +42,7 @@ export function DiscoverPanel({ ensureResumeId, onResults, onError }: DiscoverPa
   const [minScore, setMinScore] = useState(0);
   const [report, setReport] = useState<DiscoverResponse | null>(null);
 
+  const queryClient = useQueryClient();
   const sourcesQuery = useQuery({ queryKey: ["sources"], queryFn: listSources });
 
   const discoverMutation = useMutation({
@@ -69,6 +70,8 @@ export function DiscoverPanel({ ensureResumeId, onResults, onError }: DiscoverPa
       setReport(data);
       onResults(data);
       onError(null);
+      // Newly pulled postings belong in the "Found online" list right away.
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
     },
     onError: (err: Error) => {
       setReport(null);

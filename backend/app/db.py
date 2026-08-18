@@ -394,7 +394,7 @@ def list_jobs(limit: int = 100, origin: str | None = "manual") -> list[dict[str,
     bulk on every search - do not swamp the user's curated library.
     """
     query = """
-        SELECT id, filename, created_at
+        SELECT id, filename, created_at, origin, source, url, company, location
         FROM documents
         WHERE doc_type = 'job'
     """
@@ -412,6 +412,11 @@ def list_jobs(limit: int = 100, origin: str | None = "manual") -> list[dict[str,
             "id": row["id"],
             "filename": row["filename"],
             "created_at": row["created_at"],
+            "origin": row["origin"],
+            "source": row["source"],
+            "url": row["url"],
+            "company": row["company"],
+            "location": row["location"],
         }
         for row in rows
     ]

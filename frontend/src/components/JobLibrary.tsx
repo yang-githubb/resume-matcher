@@ -27,7 +27,7 @@ async function addJob(payload: { file?: File; text?: string; label?: string }) {
 
 export function JobLibrary({ selectedIds, onToggle, onSelectAll, disabled }: JobLibraryProps) {
   const queryClient = useQueryClient();
-  const jobsQuery = useQuery({ queryKey: ["jobs"], queryFn: listJobs });
+  const jobsQuery = useQuery({ queryKey: ["jobs", "manual"], queryFn: () => listJobs("manual") });
 
   const addMutation = useMutation({
     mutationFn: addJob,

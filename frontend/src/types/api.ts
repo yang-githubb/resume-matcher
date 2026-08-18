@@ -16,6 +16,11 @@ export interface JobSummary {
   id: string;
   filename: string;
   created_at: string;
+  origin: "manual" | "discovered";
+  source?: string | null;
+  url?: string | null;
+  company?: string | null;
+  location?: string | null;
 }
 
 export interface MatchBreakdown {
