@@ -76,7 +76,7 @@ cd c:\Users\Yang5\Documents\CodeProject\resume-matcher\scripts
 Or with explanations (needs Ollama):
 ```powershell
 cd backend
-python cli.py --job fixtures\sample_job.txt --resumes fixtures\sample_resume_strong.txt fixtures\sample_resume_weak.txt
+python cli.py --resume fixtures\sample_resume_strong.txt --jobs fixtures\sample_job.txt
 ```
 
 ### Run tests
@@ -120,14 +120,13 @@ resume is scored against them.
 
 ## Using the app
 
-1. Pick **Job seeker** or **Recruiter** mode
-2. Add a **job** (file or paste), or use **Find jobs online**
-3. Add **1–2 resumes** (file or paste per slot)
-4. Click **Rank matches**
-5. Click a result for **analysis**
-6. Ask **follow-up questions** in the chat panel
-7. **Export .md** to save the report
-8. Reload past runs from **Saved sessions**
+1. Add your **resume** (file or paste)
+2. Build the **job library** — paste/upload postings, or use **Find jobs online**
+3. Click **Rank jobs for my resume** (or **Find & rank jobs online**)
+4. Click a result for **analysis**
+5. Ask **follow-up questions** in the chat panel
+6. **Export .md** to save the report
+7. Reload past runs from **Saved sessions** — the 5 most recent are kept
 
 Ranking works without Ollama. Analysis falls back to a rule-based summary if Ollama is offline.
 
@@ -148,9 +147,10 @@ Tune in `backend/.env`.
 | `POST /documents/upload` | Upload PDF/DOCX |
 | `POST /documents/text` | Paste plain text |
 | `PATCH /documents/{id}` | Edit extracted text |
+| `GET /documents/jobs?origin=` | List jobs — `manual`, `discovered` or `all` |
 | `GET /discover/sources` | List job boards + which are configured |
 | `POST /discover/match` | Search boards by preferences, rank against a resume |
-| `POST /match/rank` | Rank up to 2 resumes |
+| `POST /match/rank-jobs` | Rank library jobs against a resume |
 | `GET /match/sessions/{id}` | Load session |
 | `GET /match/sessions/{id}/export` | Download markdown report |
 | `GET /sessions` | List saved sessions |

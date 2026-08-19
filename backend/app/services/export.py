@@ -4,12 +4,9 @@ from typing import Any
 
 
 def build_session_markdown(session: dict[str, Any], results: list[dict[str, Any]]) -> str:
-    variant = "jobs_for_resume" if session.get("resume_id") and not session.get("job_id") else "resumes_for_job"
-
     lines = [
         "# Resume Match Report",
         "",
-        f"- **Mode:** {session['mode']}",
         f"- **Session:** {session['id']}",
         f"- **Created:** {session['created_at']}",
         "",
@@ -18,10 +15,7 @@ def build_session_markdown(session: dict[str, Any], results: list[dict[str, Any]
     ]
 
     for index, item in enumerate(results, start=1):
-        if variant == "jobs_for_resume":
-            title = item.get("job_filename", "Job")
-        else:
-            title = item.get("resume_filename", "Resume")
+        title = item.get("job_filename", "Job")
 
         lines.extend(
             [

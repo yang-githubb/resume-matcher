@@ -38,7 +38,6 @@ class MatchBreakdown(BaseModel):
 class MatchResultItem(BaseModel):
     id: str
     resume_id: str | None = None
-    resume_filename: str | None = None
     job_id: str | None = None
     job_filename: str | None = None
     job_url: str | None = None
@@ -54,9 +53,6 @@ class MatchResultItem(BaseModel):
 
 class RankResponse(BaseModel):
     session_id: str
-    mode: Literal["seeker", "recruiter"]
-    variant: Literal["resumes_for_job", "jobs_for_resume"]
-    job_id: str | None = None
     resume_id: str | None = None
     resume_filename: str | None = None
     results: list[MatchResultItem]
@@ -85,10 +81,7 @@ class ChatResponse(BaseModel):
 
 class SessionSummary(BaseModel):
     id: str
-    mode: str
-    job_id: str | None = None
     resume_id: str | None = None
-    job_filename: str | None = None
     resume_filename: str | None = None
     created_at: str
 

@@ -7,10 +7,9 @@ import type { MatchResultItem } from "@/types/api";
 interface ChatPanelProps {
   sessionId: string | null;
   selected: MatchResultItem | null;
-  variant: "resumes_for_job" | "jobs_for_resume";
 }
 
-export function ChatPanel({ sessionId, selected, variant }: ChatPanelProps) {
+export function ChatPanel({ sessionId, selected }: ChatPanelProps) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([]);
 
@@ -36,11 +35,6 @@ export function ChatPanel({ sessionId, selected, variant }: ChatPanelProps) {
     },
   });
 
-  const subjectLabel =
-    variant === "jobs_for_resume"
-      ? selected?.job_filename
-      : selected?.resume_filename;
-
   const handleSend = () => {
     if (!sessionId || !input.trim()) return;
     chatMutation.mutate({
@@ -56,7 +50,7 @@ export function ChatPanel({ sessionId, selected, variant }: ChatPanelProps) {
       {!selected ? (
         <p className="muted">Select a ranked result to chat about that match.</p>
       ) : (
-        <p className="muted">Asking about: {subjectLabel}</p>
+        <p className="muted">Asking about: {selected.job_filename}</p>
       )}
 
       <div className="chat-log">

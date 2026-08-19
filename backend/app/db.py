@@ -10,6 +10,9 @@ from uuid import uuid4
 
 from app.config import settings
 
+# Saved sessions are a short history, not an archive.
+MAX_SAVED_SESSIONS = 5
+
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -207,21 +210,42 @@ def get_document(doc_id: str) -> dict[str, Any] | None:
     }
 
 
-def create_match_session(
-    mode: str,
-    job_id: str | None = None,
-    resume_id: str | None = None,
-) -> str:
+def create_match_session(resume_id: str) -> str:
     session_id = str(uuid4())
     with get_connection() as conn:
         conn.execute(
             """
             INSERT INTO match_sessions (id, mode, job_id, resume_id, created_at)
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (?, 'seeker', NULL, ?, ?)
             """,
-            (session_id, mode, job_id, resume_id, _utc_now()),
+            (session_id, resume_id, _utc_now()),
         )
+    prune_sessions()
     return session_id
+
+
+def prune_sessions(keep: int = MAX_SAVED_SESSIONS) -> int:
+    """Keep only the newest sessions, deleting older ones and everything they own.
+
+    Sessions accumulate on every ranking run, so old ones are dropped rather
+    than left to grow the database indefinitely.
+    """
+    with get_connection() as conn:
+        stale = [
+            row["id"]
+            for row in conn.execute(
+                "SELECT id FROM match_sessions ORDER BY created_at DESC LIMIT -1 OFFSET ?",
+                (keep,),
+            ).fetchall()
+        ]
+        if not stale:
+            return 0
+
+        placeholders = ",".join("?" * len(stale))
+        conn.execute(f"DELETE FROM chat_messages WHERE session_id IN ({placeholders})", stale)
+        conn.execute(f"DELETE FROM match_results WHERE session_id IN ({placeholders})", stale)
+        conn.execute(f"DELETE FROM match_sessions WHERE id IN ({placeholders})", stale)
+    return len(stale)
 
 
 def insert_match_result(
@@ -259,50 +283,14 @@ def insert_match_result(
 
 
 def get_session_results(session_id: str) -> list[dict[str, Any]]:
-    session = get_session(session_id)
-    if session is None:
-        return []
-
-    is_jobs_for_resume = session.get("resume_id") and not session.get("job_id")
-
     with get_connection() as conn:
-        if is_jobs_for_resume:
-            rows = conn.execute(
-                """
-                SELECT mr.*, d.filename AS job_filename, d.url AS job_url,
-                       d.company AS job_company, d.location AS job_location,
-                       d.source AS job_source
-                FROM match_results mr
-                JOIN documents d ON d.id = mr.job_id
-                WHERE mr.session_id = ?
-                ORDER BY mr.score DESC
-                """,
-                (session_id,),
-            ).fetchall()
-            return [
-                {
-                    "id": row["id"],
-                    "resume_id": row["resume_id"],
-                    "job_id": row["job_id"],
-                    "job_filename": row["job_filename"],
-                    "job_url": row["job_url"],
-                    "job_company": row["job_company"],
-                    "job_location": row["job_location"],
-                    "job_source": row["job_source"],
-                    "score": row["score"],
-                    "semantic_score": row["semantic_score"],
-                    "keyword_score": row["keyword_score"],
-                    "breakdown": json.loads(row["breakdown_json"]),
-                    "explanation": row["explanation"],
-                }
-                for row in rows
-            ]
-
         rows = conn.execute(
             """
-            SELECT mr.*, d.filename AS resume_filename
+            SELECT mr.*, d.filename AS job_filename, d.url AS job_url,
+                   d.company AS job_company, d.location AS job_location,
+                   d.source AS job_source
             FROM match_results mr
-            JOIN documents d ON d.id = mr.resume_id
+            JOIN documents d ON d.id = mr.job_id
             WHERE mr.session_id = ?
             ORDER BY mr.score DESC
             """,
@@ -314,7 +302,11 @@ def get_session_results(session_id: str) -> list[dict[str, Any]]:
             "id": row["id"],
             "resume_id": row["resume_id"],
             "job_id": row["job_id"],
-            "resume_filename": row["resume_filename"],
+            "job_filename": row["job_filename"],
+            "job_url": row["job_url"],
+            "job_company": row["job_company"],
+            "job_location": row["job_location"],
+            "job_source": row["job_source"],
             "score": row["score"],
             "semantic_score": row["semantic_score"],
             "keyword_score": row["keyword_score"],
@@ -428,15 +420,13 @@ def delete_document(doc_id: str) -> bool:
     return cursor.rowcount > 0
 
 
-def list_sessions(limit: int = 20) -> list[dict[str, Any]]:
+def list_sessions(limit: int = MAX_SAVED_SESSIONS) -> list[dict[str, Any]]:
     with get_connection() as conn:
         rows = conn.execute(
             """
-            SELECT ms.*,
-                   jd.filename AS job_filename,
+            SELECT ms.id, ms.resume_id, ms.created_at,
                    rd.filename AS resume_filename
             FROM match_sessions ms
-            LEFT JOIN documents jd ON jd.id = ms.job_id
             LEFT JOIN documents rd ON rd.id = ms.resume_id
             ORDER BY ms.created_at DESC
             LIMIT ?
@@ -446,10 +436,7 @@ def list_sessions(limit: int = 20) -> list[dict[str, Any]]:
     return [
         {
             "id": row["id"],
-            "mode": row["mode"],
-            "job_id": row["job_id"],
-            "resume_id": row["resume_id"] if "resume_id" in row.keys() else None,
-            "job_filename": row["job_filename"],
+            "resume_id": row["resume_id"],
             "resume_filename": row["resume_filename"],
             "created_at": row["created_at"],
         }

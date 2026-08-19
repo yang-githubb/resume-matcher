@@ -50,12 +50,3 @@ def rank_jobs(jobs: list[dict[str, Any]], resume: dict[str, Any]) -> list[dict[s
         scored.append({"job": job, **result})
     scored.sort(key=lambda item: item["score"], reverse=True)
     return scored
-
-
-def rank_resumes(resumes: list[dict[str, Any]], job: dict[str, Any]) -> list[dict[str, Any]]:
-    scored = []
-    for resume in resumes:
-        result = hybrid_score(resume, job)
-        scored.append({"resume": resume, **result})
-    scored.sort(key=lambda item: item["score"], reverse=True)
-    return scored

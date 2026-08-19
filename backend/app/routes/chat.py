@@ -10,13 +10,8 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 
 
 def _resolve_from_session(session: dict, target: dict) -> tuple[dict, dict]:
-    is_jobs_for_resume = session.get("resume_id") and not session.get("job_id")
-    if is_jobs_for_resume:
-        resume = db.get_document(session["resume_id"])
-        job = db.get_document(target["job_id"])
-    else:
-        job = db.get_document(session["job_id"])
-        resume = db.get_document(target["resume_id"])
+    resume = db.get_document(session["resume_id"])
+    job = db.get_document(target["job_id"])
     if job is None or resume is None:
         raise HTTPException(status_code=404, detail="Linked documents not found.")
     return resume, job

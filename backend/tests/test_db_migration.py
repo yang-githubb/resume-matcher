@@ -38,5 +38,5 @@ def test_migrate_legacy_not_null_job_id(tmp_path, monkeypatch):
   assert cols["job_id"] == 0
   assert cols["resume_id"] == 0
 
-  session_id = db.create_match_session("seeker", resume_id="resume-1")
+  session_id = db.create_match_session(resume_id="resume-1")
   assert session_id
