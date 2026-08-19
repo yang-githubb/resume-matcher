@@ -138,7 +138,7 @@ async def discover_and_match(request: DiscoverMatchRequest) -> DiscoverResponse:
             f"{request.min_score:.0f}%. Lower the minimum score or widen your keywords.",
         )
 
-    session_id = db.create_match_session("seeker", resume_id=resume["id"])
+    session_id = db.create_match_session(resume_id=resume["id"])
 
     results: list[MatchResultItem] = []
     for index, item in enumerate(ranked):
@@ -186,8 +186,6 @@ async def discover_and_match(request: DiscoverMatchRequest) -> DiscoverResponse:
 
     return DiscoverResponse(
         session_id=session_id,
-        mode="seeker",
-        variant="jobs_for_resume",
         resume_id=resume["id"],
         resume_filename=resume["filename"],
         results=results,

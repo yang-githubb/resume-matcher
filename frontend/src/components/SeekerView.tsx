@@ -9,7 +9,6 @@ import { ResultsPanel } from "@/components/ResultsPanel";
 import {
   createTextDocument,
   exportSessionUrl,
-  getSession,
   listJobs,
   rankJobsForResume,
   uploadDocument,
@@ -159,7 +158,6 @@ export function SeekerView({ rankData, onRankData, onError }: SeekerViewProps) {
             results={rankData?.results ?? []}
             selectedId={selectedResultId}
             onSelect={setSelectedResultId}
-            variant="jobs_for_resume"
           />
         </div>
 
@@ -172,28 +170,9 @@ export function SeekerView({ rankData, onRankData, onError }: SeekerViewProps) {
           ) : (
             <p className="muted">Select a job from the rankings to view analysis.</p>
           )}
-          <ChatPanel
-            sessionId={rankData?.session_id ?? null}
-            selected={selected}
-            variant="jobs_for_resume"
-          />
+          <ChatPanel sessionId={rankData?.session_id ?? null} selected={selected} />
         </div>
       </section>
     </>
   );
-}
-
-export function useLoadSeekerSession(
-  onRankData: (data: RankResponse) => void,
-  onError: (message: string | null) => void,
-) {
-  return async (sessionId: string) => {
-    onError(null);
-    try {
-      const data = await getSession(sessionId);
-      onRankData(data);
-    } catch (err) {
-      onError((err as Error).message);
-    }
-  };
 }

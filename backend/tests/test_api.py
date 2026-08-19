@@ -40,45 +40,12 @@ def test_create_job_from_text(client):
     assert "python" in body["structured"]["skills"]
 
 
-def test_rank_without_ollama(client, monkeypatch):
-    job = client.post(
-        "/documents/text",
-        json={
-            "doc_type": "job",
-            "text": "Python FastAPI SQL Docker Agile REST API engineer role with PostgreSQL.",
-            "label": "job.txt",
-        },
-    ).json()
-
-    resume = client.post(
-        "/documents/text",
-        json={
-            "doc_type": "resume",
-            "text": "Software engineer with Python FastAPI SQL Docker Git Agile REST API experience.",
-            "label": "resume.txt",
-        },
-    ).json()
-
-    async def fake_explain(*_args, **_kwargs):
-        return "Test explanation"
-
-    monkeypatch.setattr("app.routes.match.generate_explanation", fake_explain)
-
-    rank = client.post(
+def test_recruiter_rank_endpoint_is_gone(client):
+    response = client.post(
         "/match/rank",
-        json={
-            "mode": "seeker",
-            "job_id": job["id"],
-            "resume_ids": [resume["id"]],
-            "explain": True,
-        },
+        json={"mode": "recruiter", "job_id": "x", "resume_ids": ["y"], "explain": False},
     )
-    assert rank.status_code == 200
-    data = rank.json()
-    assert len(data["results"]) == 1
-    assert data["results"][0]["score"] > 0
-    assert data["results"][0]["explanation"] == "Test explanation"
-    assert data["variant"] == "resumes_for_job"
+    assert response.status_code == 404
 
 
 def test_rank_jobs_for_resume(client, monkeypatch):
@@ -118,7 +85,28 @@ def test_rank_jobs_for_resume(client, monkeypatch):
     )
     assert rank.status_code == 200
     data = rank.json()
-    assert data["variant"] == "jobs_for_resume"
     assert len(data["results"]) == 2
     assert data["results"][0]["score"] >= data["results"][1]["score"]
     assert data["results"][0]["job_filename"] == "job-a.txt"
+
+
+def test_only_the_newest_sessions_are_kept(client):
+    from app import db
+
+    resume = client.post(
+        "/documents/text",
+        json={
+            "doc_type": "resume",
+            "text": "Software engineer with Python FastAPI SQL Docker Git Agile REST API experience.",
+            "label": "resume.txt",
+        },
+    ).json()
+
+    created = [db.create_match_session(resume_id=resume["id"]) for _ in range(8)]
+
+    sessions = client.get("/sessions").json()
+    assert len(sessions) == db.MAX_SAVED_SESSIONS
+
+    # The survivors are the most recent ones, oldest first dropped.
+    kept = {s["id"] for s in sessions}
+    assert kept == set(created[-db.MAX_SAVED_SESSIONS :])

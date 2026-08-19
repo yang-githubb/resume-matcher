@@ -9,5 +9,5 @@ if not exist .venv (
   call .venv\Scripts\activate.bat
 )
 if not exist .env copy .env.example .env
-python cli.py --job fixtures\sample_job.txt --resumes fixtures\sample_resume_strong.txt fixtures\sample_resume_weak.txt --no-explain
+python cli.py --resume fixtures\sample_resume_strong.txt --jobs fixtures\sample_job.txt --no-explain
 endlocal

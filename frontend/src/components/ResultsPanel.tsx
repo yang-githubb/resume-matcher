@@ -4,28 +4,16 @@ interface ResultsPanelProps {
   results: MatchResultItem[];
   selectedId: string | null;
   onSelect: (id: string) => void;
-  variant: "resumes_for_job" | "jobs_for_resume";
 }
 
-export function ResultsPanel({ results, selectedId, onSelect, variant }: ResultsPanelProps) {
+export function ResultsPanel({ results, selectedId, onSelect }: ResultsPanelProps) {
   if (results.length === 0) {
-    return (
-      <p className="muted">
-        {variant === "jobs_for_resume"
-          ? "Add jobs to your library and rank to see best fits."
-          : "Upload files and run match to see rankings."}
-      </p>
-    );
+    return <p className="muted">Add jobs to your library and rank to see best fits.</p>;
   }
 
   return (
     <div className="results-list">
       {results.map((item, index) => {
-        const label =
-          variant === "jobs_for_resume"
-            ? (item.job_filename ?? "Job")
-            : (item.resume_filename ?? "Resume");
-
         const meta = [item.job_location, item.job_source].filter(Boolean).join(" · ");
 
         return (
@@ -36,7 +24,7 @@ export function ResultsPanel({ results, selectedId, onSelect, variant }: Results
             <button type="button" className="result-main" onClick={() => onSelect(item.id)}>
               <div className="result-header">
                 <span className="rank">#{index + 1}</span>
-                <strong>{label}</strong>
+                <strong>{item.job_filename ?? "Job"}</strong>
                 <span className="score">{item.score}%</span>
               </div>
               {meta ? <div className="result-meta">{meta}</div> : null}
@@ -64,7 +52,7 @@ export function ResultsPanel({ results, selectedId, onSelect, variant }: Results
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                View & apply →
+                View &amp; apply →
               </a>
             ) : null}
           </div>

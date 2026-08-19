@@ -33,7 +33,6 @@ export interface MatchBreakdown {
 export interface MatchResultItem {
   id: string;
   resume_id?: string | null;
-  resume_filename?: string | null;
   job_id?: string | null;
   job_filename?: string | null;
   job_url?: string | null;
@@ -49,9 +48,6 @@ export interface MatchResultItem {
 
 export interface RankResponse {
   session_id: string;
-  mode: "seeker" | "recruiter";
-  variant: "resumes_for_job" | "jobs_for_resume";
-  job_id?: string | null;
   resume_id?: string | null;
   resume_filename?: string | null;
   results: MatchResultItem[];
@@ -64,10 +60,7 @@ export interface ChatResponse {
 
 export interface SessionSummary {
   id: string;
-  mode: string;
-  job_id?: string | null;
   resume_id?: string | null;
-  job_filename?: string | null;
   resume_filename?: string | null;
   created_at: string;
 }

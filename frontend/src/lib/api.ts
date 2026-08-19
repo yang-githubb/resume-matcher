@@ -92,19 +92,6 @@ export async function rankJobsForResume(payload: {
   });
 }
 
-export async function rankDocuments(payload: {
-  mode: "seeker" | "recruiter";
-  job_id: string;
-  resume_ids: string[];
-  explain?: boolean;
-}): Promise<RankResponse> {
-  return request<RankResponse>("/match/rank", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-}
-
 export async function listSources(): Promise<SourceInfo[]> {
   return request<SourceInfo[]>("/discover/sources");
 }
