@@ -108,12 +108,16 @@ resume is scored against them.
 ## Using the app
 
 1. Add your **resume** (file or paste)
-2. Build the **job library** — paste/upload postings, or use **Find jobs online**
-3. Click **Rank jobs for my resume** (or **Find & rank jobs online**)
-4. Click a result for **analysis**
-5. Ask **follow-up questions** in the chat panel
-6. **Export .md** to save the report
-7. Reload past runs from **Saved sessions** — the 5 most recent are kept
+2. Set your preferences and click **Find & rank jobs online** — the single action
+3. Click a result for **analysis**
+4. Ask **follow-up questions** in the chat panel
+5. **Export .md** to save the report
+6. Reload past runs from **Saved sessions** — the 5 most recent are kept
+
+Postings you add to the **job library** by hand are ranked alongside every search,
+so a job you found yourself is scored against your resume too. Jobs pulled from
+previous searches stay in the library for their apply links, but are not re-ranked —
+each search returns fresh results rather than resurfacing stale ones.
 
 Ranking works without Ollama. Analysis falls back to a rule-based summary if Ollama is offline.
 
@@ -136,8 +140,7 @@ Tune in `backend/.env`.
 | `PATCH /documents/{id}` | Edit extracted text |
 | `GET /documents/jobs?origin=` | List jobs — `manual`, `discovered` or `all` |
 | `GET /discover/sources` | List job boards + which are configured |
-| `POST /discover/match` | Search boards by preferences, rank against a resume |
-| `POST /match/rank-jobs` | Rank library jobs against a resume |
+| `POST /discover/match` | Search boards, rank results + library against a resume |
 | `GET /match/sessions/{id}` | Load session |
 | `GET /match/sessions/{id}/export` | Download markdown report |
 | `GET /sessions` | List saved sessions |

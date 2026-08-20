@@ -40,31 +40,27 @@ def test_create_job_from_text(client):
     assert "python" in body["structured"]["skills"]
 
 
-def test_recruiter_rank_endpoint_is_gone(client):
-    response = client.post(
-        "/match/rank",
-        json={"mode": "recruiter", "job_id": "x", "resume_ids": ["y"], "explain": False},
-    )
-    assert response.status_code == 404
+@pytest.mark.parametrize("path", ["/match/rank", "/match/rank-jobs"])
+def test_standalone_rank_endpoints_are_gone(client, path):
+    """Searching is the only ranking entry point now."""
+    assert client.post(path, json={"resume_id": "x"}).status_code == 404
 
 
-def test_rank_jobs_for_resume(client, monkeypatch):
-    job_a = client.post(
-        "/documents/text",
-        json={
-            "doc_type": "job",
-            "text": "Python FastAPI SQL Docker Agile REST API engineer role with PostgreSQL.",
-            "label": "job-a.txt",
-        },
-    ).json()
-    job_b = client.post(
-        "/documents/text",
-        json={
-            "doc_type": "job",
-            "text": "Marketing coordinator social media Excel communication content writing.",
-            "label": "job-b.txt",
-        },
-    ).json()
+def _fake_search(*jobs):
+    from app.sources.registry import SearchOutcome, SourceOutcome
+
+    async def run(_query, _sources=None):
+        return SearchOutcome(
+            jobs=list(jobs),
+            sources=[SourceOutcome("remotive", "Remotive", len(jobs))],
+        )
+
+    return run
+
+
+def test_discover_ranks_search_results_with_hand_added_jobs(client, monkeypatch):
+    from app.sources.base import FetchedJob
+
     resume = client.post(
         "/documents/text",
         json={
@@ -73,21 +69,82 @@ def test_rank_jobs_for_resume(client, monkeypatch):
             "label": "resume.txt",
         },
     ).json()
+    client.post(
+        "/documents/text",
+        json={
+            "doc_type": "job",
+            "text": "Python FastAPI SQL Docker Agile REST API engineer role with PostgreSQL.",
+            "label": "hand-added.txt",
+        },
+    )
+
+    fetched = FetchedJob(
+        source="remotive",
+        external_id="1",
+        title="Marketing Coordinator",
+        company="Acme",
+        url="https://example.com/1",
+        description="Social media, Excel, communication and content writing all day.",
+    )
 
     async def fake_explain(*_args, **_kwargs):
         return "Test explanation"
 
-    monkeypatch.setattr("app.routes.match.generate_explanation", fake_explain)
+    monkeypatch.setattr("app.routes.discover.registry.search", _fake_search(fetched))
+    monkeypatch.setattr("app.routes.discover.generate_explanation", fake_explain)
 
-    rank = client.post(
-        "/match/rank-jobs",
-        json={"resume_id": resume["id"], "job_ids": [job_a["id"], job_b["id"]], "explain": True},
+    response = client.post(
+        "/discover/match",
+        json={
+            "resume_id": resume["id"],
+            "preferences": {"keywords": "python engineer"},
+            "explain": False,
+        },
     )
-    assert rank.status_code == 200
-    data = rank.json()
-    assert len(data["results"]) == 2
-    assert data["results"][0]["score"] >= data["results"][1]["score"]
-    assert data["results"][0]["job_filename"] == "job-a.txt"
+    assert response.status_code == 200
+    data = response.json()
+
+    names = [r["job_filename"] for r in data["results"]]
+    assert "hand-added.txt" in names, "manual library jobs should be ranked too"
+    assert "Marketing Coordinator - Acme" in names
+    # The engineering job fits this resume better than the marketing one.
+    assert names[0] == "hand-added.txt"
+
+
+def test_discover_can_skip_the_library(client, monkeypatch):
+    from app.sources.base import FetchedJob
+
+    resume = client.post(
+        "/documents/text",
+        json={"doc_type": "resume", "text": "Python engineer with FastAPI and SQL.", "label": "r.txt"},
+    ).json()
+    client.post(
+        "/documents/text",
+        json={"doc_type": "job", "text": "Python FastAPI SQL engineer wanted here.", "label": "hand.txt"},
+    )
+
+    fetched = FetchedJob(
+        source="remotive",
+        external_id="9",
+        title="Backend Engineer",
+        company="Beta",
+        url="https://example.com/9",
+        description="Python, FastAPI and SQL work on backend services.",
+    )
+    monkeypatch.setattr("app.routes.discover.registry.search", _fake_search(fetched))
+
+    response = client.post(
+        "/discover/match",
+        json={
+            "resume_id": resume["id"],
+            "preferences": {"keywords": "python engineer"},
+            "explain": False,
+            "include_library": False,
+        },
+    )
+    assert response.status_code == 200
+    names = [r["job_filename"] for r in response.json()["results"]]
+    assert names == ["Backend Engineer - Beta"]
 
 
 def test_only_the_newest_sessions_are_kept(client):

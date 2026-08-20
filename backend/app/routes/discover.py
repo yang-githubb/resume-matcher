@@ -14,6 +14,7 @@ from app.sources.base import FetchedJob, JobQuery
 router = APIRouter(prefix="/discover", tags=["discover"])
 
 MAX_FETCH = 50
+MAX_LIBRARY_JOBS = 25
 EXPLAIN_TOP_DEFAULT = 3
 
 
@@ -50,6 +51,9 @@ class DiscoverMatchRequest(BaseModel):
     preferences: SearchPreferences
     explain: bool = True
     explain_top: int = Field(default=EXPLAIN_TOP_DEFAULT, ge=0, le=10)
+    # Hand-added postings are scored alongside the search results so a single
+    # action ranks everything the user cares about.
+    include_library: bool = True
     # Scores are on a 0-100 scale throughout the app, matching hybrid_score.
     min_score: float = Field(default=0.0, ge=0.0, le=100.0)
 
@@ -109,23 +113,39 @@ async def discover_and_match(request: DiscoverMatchRequest) -> DiscoverResponse:
     preferences = request.preferences
     outcome = await registry.search(preferences.to_query(), preferences.sources)
 
-    if not outcome.jobs:
+    # Persist first so the ranker and every later session read the same rows.
+    jobs: list[dict] = []
+    meta: dict[str, FetchedJob] = {}
+    seen: set[str] = set()
+    for fetched in outcome.jobs:
+        doc_id = _persist_job(fetched)
+        if doc_id in seen:
+            continue
+        document = db.get_document(doc_id)
+        if document is None:
+            continue
+        seen.add(doc_id)
+        jobs.append(document)
+        meta[doc_id] = fetched
+
+    # Postings already in the library are scored too. Only hand-added ones:
+    # re-ranking every previously discovered job would grow without bound and
+    # bury fresh results under stale ones.
+    if request.include_library:
+        for summary in db.list_jobs(MAX_LIBRARY_JOBS, origin="manual"):
+            if summary["id"] in seen:
+                continue
+            document = db.get_document(summary["id"])
+            if document is not None:
+                seen.add(summary["id"])
+                jobs.append(document)
+
+    if not jobs:
         errors = [f"{s.label}: {s.error}" for s in outcome.sources if s.error]
         detail = "No jobs found for those preferences."
         if errors:
             detail += " Sources reported: " + "; ".join(errors)
         raise HTTPException(status_code=502 if errors else 404, detail=detail)
-
-    # Persist first so the ranker and every later session read the same rows.
-    jobs: list[dict] = []
-    meta: dict[str, FetchedJob] = {}
-    for fetched in outcome.jobs:
-        doc_id = _persist_job(fetched)
-        document = db.get_document(doc_id)
-        if document is None:
-            continue
-        jobs.append(document)
-        meta[doc_id] = fetched
 
     ranked = rank_jobs(jobs, resume)
     if request.min_score > 0:
@@ -134,7 +154,7 @@ async def discover_and_match(request: DiscoverMatchRequest) -> DiscoverResponse:
     if not ranked:
         raise HTTPException(
             status_code=404,
-            detail=f"Found {len(outcome.jobs)} jobs but none scored above "
+            detail=f"Found {len(jobs)} jobs but none scored above "
             f"{request.min_score:.0f}%. Lower the minimum score or widen your keywords.",
         )
 
