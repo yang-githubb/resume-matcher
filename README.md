@@ -66,19 +66,6 @@ npm run dev
 | http://localhost:8000/docs | API docs |
 | http://localhost:8000/health | Health check |
 
-### Demo without UI (sample fixtures)
-
-```powershell
-cd c:\Users\Yang5\Documents\CodeProject\resume-matcher\scripts
-.\demo-cli.bat
-```
-
-Or with explanations (needs Ollama):
-```powershell
-cd backend
-python cli.py --resume fixtures\sample_resume_strong.txt --jobs fixtures\sample_job.txt
-```
-
 ### Run tests
 
 ```powershell
@@ -164,13 +151,12 @@ resume-matcher/
 ├── backend/
 │   ├── app/           # FastAPI app
 │   │   └── sources/   # Job board adapters (one module per board)
-│   ├── fixtures/      # Sample job + resumes
-│   ├── tests/
-│   └── cli.py
+│   ├── fixtures/      # Sample job + resumes (test fixtures)
+│   └── tests/
 ├── frontend/          # Vite + React UI
-└── scripts/           # start-dev.ps1, demo-cli.bat
+└── scripts/           # start-dev.ps1
 ```
 
 ## First-run note
 
-The first match downloads the embedding model (`all-MiniLM-L6-v2`, ~90MB). After that, matching 1–2 resumes is fast on CPU.
+The first match downloads the embedding model (`all-MiniLM-L6-v2`, ~90MB). After that, scoring a batch of jobs is fast on CPU.
