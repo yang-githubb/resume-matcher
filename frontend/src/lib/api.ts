@@ -79,19 +79,6 @@ export async function deleteJob(jobId: string): Promise<void> {
   await request(`/documents/${jobId}`, { method: "DELETE" });
 }
 
-export async function rankJobsForResume(payload: {
-  resume_id: string;
-  job_ids?: string[];
-  explain?: boolean;
-  explain_top?: number;
-}): Promise<RankResponse> {
-  return request<RankResponse>("/match/rank-jobs", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-}
-
 export async function listSources(): Promise<SourceInfo[]> {
   return request<SourceInfo[]>("/discover/sources");
 }

@@ -30,9 +30,15 @@ interface DiscoverPanelProps {
   ensureResumeId: () => Promise<string>;
   onResults: (data: DiscoverResponse) => void;
   onError: (message: string | null) => void;
+  onBusyChange?: (busy: boolean) => void;
 }
 
-export function DiscoverPanel({ ensureResumeId, onResults, onError }: DiscoverPanelProps) {
+export function DiscoverPanel({
+  ensureResumeId,
+  onResults,
+  onError,
+  onBusyChange,
+}: DiscoverPanelProps) {
   const [keywords, setKeywords] = useState("");
   const [location, setLocation] = useState("");
   const [seniority, setSeniority] = useState("");
@@ -46,6 +52,8 @@ export function DiscoverPanel({ ensureResumeId, onResults, onError }: DiscoverPa
   const sourcesQuery = useQuery({ queryKey: ["sources"], queryFn: listSources });
 
   const discoverMutation = useMutation({
+    onMutate: () => onBusyChange?.(true),
+    onSettled: () => onBusyChange?.(false),
     mutationFn: async () => {
       if (keywords.trim().length < 2) {
         throw new Error("Enter a role or some keywords to search for.");
@@ -84,8 +92,8 @@ export function DiscoverPanel({ ensureResumeId, onResults, onError }: DiscoverPa
   return (
     <div className="discover">
       <p className="muted small-hint">
-        Tell us what you want, then we search public job boards and rank every result
-        against your resume.
+        Tell us what you want, then we search public job boards and rank every result —
+        plus any jobs you added by hand — against your resume.
       </p>
 
       <label className="field">

@@ -1,18 +1,11 @@
 import { useMemo, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { ChatPanel } from "@/components/ChatPanel";
 import { DiscoverPanel } from "@/components/DiscoverPanel";
 import { DocumentInput } from "@/components/DocumentInput";
 import { JobLibrary } from "@/components/JobLibrary";
 import { ResultsPanel } from "@/components/ResultsPanel";
-import {
-  createTextDocument,
-  exportSessionUrl,
-  listJobs,
-  rankJobsForResume,
-  uploadDocument,
-} from "@/lib/api";
+import { createTextDocument, exportSessionUrl, uploadDocument } from "@/lib/api";
 import type { MatchResultItem, RankResponse } from "@/types/api";
 
 type ResumeSource = { kind: "file"; file: File } | { kind: "text"; text: string; label: string };
@@ -26,13 +19,10 @@ interface SeekerViewProps {
 export function SeekerView({ rankData, onRankData, onError }: SeekerViewProps) {
   const [resumeSource, setResumeSource] = useState<ResumeSource | null>(null);
   const [resumeId, setResumeId] = useState<string | null>(null);
-  const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
   const [selectedResultId, setSelectedResultId] = useState<string | null>(null);
+  const [searching, setSearching] = useState(false);
 
-  // "all" so ranking against "the library" covers both hand-added and discovered jobs.
-  const jobsQuery = useQuery({ queryKey: ["jobs", "all"], queryFn: () => listJobs("all") });
-
-  // Both the library flow and the online search need the resume persisted first.
+  // The search needs the resume persisted before it can rank anything.
   const ensureResumeId = async (): Promise<string> => {
     if (resumeId) return resumeId;
     if (!resumeSource) {
@@ -50,42 +40,10 @@ export function SeekerView({ rankData, onRankData, onError }: SeekerViewProps) {
     return doc.id;
   };
 
-  const matchMutation = useMutation({
-    mutationFn: async () => {
-      const id = await ensureResumeId();
-
-      const jobIds =
-        selectedJobIds.length > 0 ? selectedJobIds : jobsQuery.data?.map((j) => j.id);
-
-      if (!jobIds?.length) {
-        throw new Error("Add at least one job to your library.");
-      }
-
-      return rankJobsForResume({
-        resume_id: id,
-        job_ids: jobIds,
-        explain: true,
-        explain_top: 5,
-      });
-    },
-    onSuccess: (data) => {
-      onRankData(data);
-      setSelectedResultId(data.results[0]?.id ?? null);
-      onError(null);
-    },
-    onError: (err: Error) => onError(err.message),
-  });
-
   const selected = useMemo<MatchResultItem | null>(() => {
     if (!rankData || !selectedResultId) return null;
     return rankData.results.find((r) => r.id === selectedResultId) ?? null;
   }, [rankData, selectedResultId]);
-
-  const toggleJob = (jobId: string) => {
-    setSelectedJobIds((prev) =>
-      prev.includes(jobId) ? prev.filter((id) => id !== jobId) : [...prev, jobId],
-    );
-  };
 
   return (
     <>
@@ -106,19 +64,11 @@ export function SeekerView({ rankData, onRankData, onError }: SeekerViewProps) {
                 });
               }
             }}
-            disabled={matchMutation.isPending}
+            disabled={searching}
           />
           {resumeId ? <p className="muted">Resume loaded and ready to reuse.</p> : null}
-          <button
-            type="button"
-            className="btn primary"
-            disabled={matchMutation.isPending}
-            onClick={() => matchMutation.mutate()}
-          >
-            {matchMutation.isPending ? "Matching..." : "Rank jobs for my resume"}
-          </button>
           <p className="muted small-hint">
-            Matches against selected jobs, or all jobs in the library if none selected.
+            Add your resume, then run the search on the right to see which roles fit you best.
           </p>
         </div>
 
@@ -126,6 +76,7 @@ export function SeekerView({ rankData, onRankData, onError }: SeekerViewProps) {
           <h2>Find jobs online</h2>
           <DiscoverPanel
             ensureResumeId={ensureResumeId}
+            onBusyChange={setSearching}
             onResults={(data) => {
               onRankData(data);
               setSelectedResultId(data.results[0]?.id ?? null);
@@ -136,12 +87,7 @@ export function SeekerView({ rankData, onRankData, onError }: SeekerViewProps) {
       </section>
 
       <section className="panel">
-        <JobLibrary
-          selectedIds={selectedJobIds}
-          onToggle={toggleJob}
-          onSelectAll={setSelectedJobIds}
-          disabled={matchMutation.isPending}
-        />
+        <JobLibrary disabled={searching} />
       </section>
 
       <section className="grid-2">
