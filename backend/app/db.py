@@ -4,7 +4,6 @@ import json
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any, Iterator
 from uuid import uuid4
 
@@ -384,27 +383,6 @@ def get_chat_messages(session_id: str) -> list[dict[str, str]]:
             (session_id,),
         ).fetchall()
     return [{"role": row["role"], "content": row["content"]} for row in rows]
-
-
-def update_document(doc_id: str, raw_text: str, structured: dict[str, Any]) -> bool:
-    with get_connection() as conn:
-        cursor = conn.execute(
-            """
-            UPDATE documents
-            SET raw_text = ?, structured_json = ?
-            WHERE id = ?
-            """,
-            (raw_text, json.dumps(structured), doc_id),
-        )
-    return cursor.rowcount > 0
-
-
-def update_match_explanation(result_id: str, explanation: str) -> None:
-    with get_connection() as conn:
-        conn.execute(
-            "UPDATE match_results SET explanation = ? WHERE id = ?",
-            (explanation, result_id),
-        )
 
 
 def list_jobs(limit: int = 100, origin: str | None = "manual") -> list[dict[str, Any]]:

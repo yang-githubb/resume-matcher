@@ -7,8 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app import db
 from app.config import settings
 from app.explain.ollama import check_ollama
-from app.routes import chat, discover, documents, match
-from app.schemas import HealthResponse, SessionSummary
+from app.routes import chat, discover, documents, sessions
+from app.schemas import HealthResponse
 
 
 @asynccontextmanager
@@ -17,7 +17,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     yield
 
 
-app = FastAPI(title="Resume Matcher", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="Resume Matcher", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -28,9 +28,9 @@ app.add_middleware(
 )
 
 app.include_router(documents.router)
-app.include_router(match.router)
-app.include_router(chat.router)
 app.include_router(discover.router)
+app.include_router(sessions.router)
+app.include_router(chat.router)
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -45,8 +45,3 @@ async def health() -> HealthResponse:
             "keyword": settings.keyword_weight,
         },
     )
-
-
-@app.get("/sessions", response_model=list[SessionSummary])
-async def list_sessions() -> list[SessionSummary]:
-    return [SessionSummary(**item) for item in db.list_sessions()]

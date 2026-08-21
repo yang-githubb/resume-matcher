@@ -58,16 +58,6 @@ class RankResponse(BaseModel):
     results: list[MatchResultItem]
 
 
-class ExplainRequest(BaseModel):
-    session_id: str
-    result_id: str
-
-
-class ExplainResponse(BaseModel):
-    result_id: str
-    explanation: str
-
-
 class ChatRequest(BaseModel):
     session_id: str
     message: str
@@ -97,7 +87,3 @@ class TextDocumentRequest(BaseModel):
     doc_type: Literal["resume", "job"]
     text: str = Field(min_length=30)
     label: str = "pasted.txt"
-
-
-class UpdateDocumentRequest(BaseModel):
-    raw_text: str = Field(min_length=20)

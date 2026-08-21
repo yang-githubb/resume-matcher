@@ -40,10 +40,53 @@ def test_create_job_from_text(client):
     assert "python" in body["structured"]["skills"]
 
 
-@pytest.mark.parametrize("path", ["/match/rank", "/match/rank-jobs"])
+@pytest.mark.parametrize("path", ["/match/rank", "/match/rank-jobs", "/match/explain"])
 def test_standalone_rank_endpoints_are_gone(client, path):
     """Searching is the only ranking entry point now."""
     assert client.post(path, json={"resume_id": "x"}).status_code == 404
+
+
+def test_sessions_round_trip(client):
+    """A saved run can be listed, reloaded and exported."""
+    from app import db
+
+    resume = _add_resume(client, "cv.txt")
+    job = client.post(
+        "/documents/text",
+        json={
+            "doc_type": "job",
+            "text": "Python FastAPI SQL Docker Agile REST API engineer role with PostgreSQL.",
+            "label": "job.txt",
+        },
+    ).json()
+
+    session_id = db.create_match_session(resume_id=resume["id"])
+    db.insert_match_result(
+        session_id,
+        88.0,
+        90.0,
+        80.0,
+        {
+            "matched_skills": ["python"],
+            "missing_skills": [],
+            "matched_keywords": [],
+            "missing_keywords": [],
+        },
+        resume_id=resume["id"],
+        job_id=job["id"],
+        explanation="Looks good.",
+    )
+
+    assert session_id in {s["id"] for s in client.get("/sessions").json()}
+
+    loaded = client.get(f"/sessions/{session_id}").json()
+    assert loaded["resume_filename"] == "cv.txt"
+    assert loaded["results"][0]["job_filename"] == "job.txt"
+
+    export = client.get(f"/sessions/{session_id}/export")
+    assert export.status_code == 200
+    assert "job.txt" in export.text
+    assert client.get("/sessions/nope").status_code == 404
 
 
 def _fake_search(*jobs):

@@ -469,20 +469,6 @@ a.btn {
   padding-right: 0.5rem;
 }
 
-.job-check {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.65rem;
-  flex: 1;
-  min-width: 0;
-  cursor: pointer;
-}
-
-.job-check input[type="checkbox"] {
-  margin-top: 0.3rem;
-  flex-shrink: 0;
-}
-
 .job-info {
   display: flex;
   flex-direction: column;
