@@ -207,6 +207,54 @@ def test_discover_can_skip_the_library(client, monkeypatch):
     assert names == ["Backend Engineer - Beta"]
 
 
+def _add_resume(client, label: str) -> dict:
+    return client.post(
+        "/documents/text",
+        json={
+            "doc_type": "resume",
+            "text": "Software engineer with Python FastAPI SQL Docker Git Agile REST API experience.",
+            "label": label,
+        },
+    ).json()
+
+
+def test_replacing_a_resume_does_not_leave_copies_behind(client):
+    from app import db
+
+    first = _add_resume(client, "cv-v1.txt")
+    second = _add_resume(client, "cv-v2.txt")
+    third = _add_resume(client, "cv-v3.txt")
+
+    with db.get_connection() as conn:
+        ids = {
+            row["id"]
+            for row in conn.execute("SELECT id FROM documents WHERE doc_type = 'resume'")
+        }
+
+    # Only the resume in play survives; the ones it replaced are gone.
+    assert ids == {third["id"]}
+    assert first["id"] not in ids
+    assert second["id"] not in ids
+
+
+def test_a_resume_used_by_a_session_is_never_pruned(client):
+    from app import db
+
+    keeper = _add_resume(client, "used.txt")
+    db.create_match_session(resume_id=keeper["id"])
+
+    replacement = _add_resume(client, "newer.txt")
+
+    with db.get_connection() as conn:
+        ids = {
+            row["id"]
+            for row in conn.execute("SELECT id FROM documents WHERE doc_type = 'resume'")
+        }
+
+    assert keeper["id"] in ids, "a saved session still points at this resume"
+    assert replacement["id"] in ids
+
+
 def test_only_the_newest_sessions_are_kept(client):
     from app import db
 

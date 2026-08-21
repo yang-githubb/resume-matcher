@@ -9,6 +9,7 @@ interface DocumentInputProps {
   multiple?: boolean;
   maxFiles?: number;
   onReady: (payload: { file?: File; text?: string; label?: string }) => void;
+  onCleared?: () => void;
   disabled?: boolean;
 }
 
@@ -19,32 +20,48 @@ export function DocumentInput({
   multiple = false,
   maxFiles = 1,
   onReady,
+  onCleared,
   disabled = false,
 }: DocumentInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<InputMode>("file");
   const [fileNames, setFileNames] = useState<string[]>([]);
   const [pasteText, setPasteText] = useState("");
+  // Blur fires whenever focus leaves, not only when the text changed.
+  const lastSubmitted = useRef("");
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selected = Array.from(event.target.files ?? []).slice(0, maxFiles);
+    // Clearing the input lets the same file be picked again: the browser
+    // fires no change event when the value is unchanged.
+    event.target.value = "";
+    if (selected.length === 0) return;
+
     setFileNames(selected.map((f) => f.name));
-    if (selected.length === 1 && !multiple) {
+    if (!multiple) {
       onReady({ file: selected[0] });
-    } else if (selected.length > 0 && multiple) {
+    } else {
       selected.forEach((file) => onReady({ file }));
     }
   };
 
   const handlePasteBlur = () => {
     const text = pasteText.trim();
-    if (text.length >= 30) {
-      onReady({
-        text,
-        label: `${docType}-paste.txt`,
-      });
+    if (text.length >= 30 && text !== lastSubmitted.current) {
+      lastSubmitted.current = text;
+      onReady({ text, label: `${docType}-paste.txt` });
     }
   };
+
+  const clearSelection = () => {
+    setFileNames([]);
+    setPasteText("");
+    lastSubmitted.current = "";
+    if (inputRef.current) inputRef.current.value = "";
+    onCleared?.();
+  };
+
+  const hasSelection = fileNames.length > 0 || pasteText.trim().length > 0;
 
   return (
     <div className="upload-card">
@@ -78,7 +95,7 @@ export function DocumentInput({
             disabled={disabled}
             onClick={() => inputRef.current?.click()}
           >
-            Choose file{multiple ? "s" : ""}
+            {fileNames.length > 0 ? "Change file" : `Choose file${multiple ? "s" : ""}`}
           </button>
           <input
             ref={inputRef}
@@ -89,7 +106,19 @@ export function DocumentInput({
             onChange={handleFileChange}
           />
           {fileNames.length > 0 ? (
-            <p className="muted">{fileNames.join(", ")}</p>
+            <p className="muted selected-file">
+              <span>{fileNames.join(", ")}</span>
+              {onCleared ? (
+                <button
+                  type="button"
+                  className="linkish"
+                  disabled={disabled}
+                  onClick={clearSelection}
+                >
+                  Remove
+                </button>
+              ) : null}
+            </p>
           ) : (
             <p className="muted">PDF or DOCX</p>
           )}
@@ -105,7 +134,19 @@ export function DocumentInput({
             onChange={(e) => setPasteText(e.target.value)}
             onBlur={handlePasteBlur}
           />
-          <p className="muted">Min 30 characters. Click outside the box to confirm.</p>
+          <p className="muted selected-file">
+            <span>Min 30 characters. Click outside the box to confirm.</span>
+            {onCleared && hasSelection ? (
+              <button
+                type="button"
+                className="linkish"
+                disabled={disabled}
+                onClick={clearSelection}
+              >
+                Remove
+              </button>
+            ) : null}
+          </p>
         </>
       )}
     </div>

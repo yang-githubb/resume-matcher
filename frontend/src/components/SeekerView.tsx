@@ -12,7 +12,7 @@ type ResumeSource = { kind: "file"; file: File } | { kind: "text"; text: string;
 
 interface SeekerViewProps {
   rankData: RankResponse | null;
-  onRankData: (data: RankResponse) => void;
+  onRankData: (data: RankResponse | null) => void;
   onError: (message: string | null) => void;
 }
 
@@ -54,7 +54,12 @@ export function SeekerView({ rankData, onRankData, onError }: SeekerViewProps) {
             label="Resume"
             docType="resume"
             onReady={(payload) => {
+              // A new resume replaces the old one outright, and the rankings
+              // it produced no longer describe the resume on screen.
               setResumeId(null);
+              onRankData(null);
+              setSelectedResultId(null);
+              onError(null);
               if (payload.file) setResumeSource({ kind: "file", file: payload.file });
               if (payload.text) {
                 setResumeSource({
@@ -64,11 +69,18 @@ export function SeekerView({ rankData, onRankData, onError }: SeekerViewProps) {
                 });
               }
             }}
+            onCleared={() => {
+              setResumeId(null);
+              setResumeSource(null);
+              onRankData(null);
+              setSelectedResultId(null);
+              onError(null);
+            }}
             disabled={searching}
           />
-          {resumeId ? <p className="muted">Resume loaded and ready to reuse.</p> : null}
           <p className="muted small-hint">
-            Add your resume, then run the search on the right to see which roles fit you best.
+            One resume at a time — adding another replaces it. Then run the search on the
+            right to see which roles fit you best.
           </p>
         </div>
 

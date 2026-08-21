@@ -295,6 +295,22 @@ a.btn {
   margin-bottom: 1rem;
 }
 
+.selected-file {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.selected-file span {
+  overflow-wrap: anywhere;
+}
+
+.selected-file .linkish {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+}
+
 .search-progress {
   margin-top: 1rem;
 }

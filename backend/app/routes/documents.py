@@ -78,6 +78,8 @@ async def upload_document(
 
     structured = structure_text(raw_text)
     doc_id = db.insert_document(doc_type, file.filename, raw_text, structured)
+    if doc_type == "resume":
+        db.prune_orphan_resumes(keep_id=doc_id)
 
     return ParseResponse(
         id=doc_id,
@@ -110,6 +112,8 @@ async def create_from_text(request: TextDocumentRequest) -> ParseResponse:
 
     structured = structure_text(text)
     doc_id = db.insert_document(request.doc_type, request.label, text, structured)
+    if request.doc_type == "resume":
+        db.prune_orphan_resumes(keep_id=doc_id)
 
     return ParseResponse(
         id=doc_id,
