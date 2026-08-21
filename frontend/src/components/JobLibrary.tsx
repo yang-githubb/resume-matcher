@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { DocumentInput } from "@/components/DocumentInput";
@@ -24,13 +25,18 @@ async function addJob(payload: { file?: File; text?: string; label?: string }) {
 
 export function JobLibrary({ disabled }: JobLibraryProps) {
   const queryClient = useQueryClient();
+  // Remounting after each add clears the picker, so the next posting starts blank.
+  const [inputKey, setInputKey] = useState(0);
   // "all" merges what you added by hand with what a search pulled in, so
   // there is one library and one selection pool instead of two disjoint ones.
   const jobsQuery = useQuery({ queryKey: ["jobs", "all"], queryFn: () => listJobs("all") });
 
   const addMutation = useMutation({
     mutationFn: addJob,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["jobs"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      setInputKey((k) => k + 1);
+    },
   });
 
   const deleteMutation = useMutation({
@@ -57,6 +63,7 @@ export function JobLibrary({ disabled }: JobLibraryProps) {
       </div>
 
       <DocumentInput
+        key={inputKey}
         label="Add job to library"
         docType="job"
         onReady={(payload) => addMutation.mutate(payload)}

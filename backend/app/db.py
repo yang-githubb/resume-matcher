@@ -183,6 +183,34 @@ def insert_document(
     return doc_id
 
 
+def prune_orphan_resumes(keep_id: str | None = None) -> int:
+    """Drop resumes nothing refers to, keeping the one currently in use.
+
+    Every upload stores a new row, so replacing a CV - or re-uploading the
+    same one - would otherwise leave copies of it behind indefinitely.
+    """
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT id FROM documents
+            WHERE doc_type = 'resume'
+              AND id NOT IN (
+                  SELECT resume_id FROM match_sessions WHERE resume_id IS NOT NULL
+              )
+              AND id NOT IN (
+                  SELECT resume_id FROM match_results WHERE resume_id IS NOT NULL
+              )
+            """
+        ).fetchall()
+        stale = [row["id"] for row in rows if row["id"] != keep_id]
+        if not stale:
+            return 0
+
+        placeholders = ",".join("?" * len(stale))
+        conn.execute(f"DELETE FROM documents WHERE id IN ({placeholders})", stale)
+    return len(stale)
+
+
 def find_job_by_external(source: str, external_id: str) -> str | None:
     """Return an existing document id for a posting already pulled from a board."""
     if not source or not external_id:
