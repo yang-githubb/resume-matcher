@@ -141,6 +141,7 @@ Tune in `backend/.env`.
 | `GET /documents/jobs?origin=` | List jobs — `manual`, `discovered` or `all` |
 | `GET /discover/sources` | List job boards + which are configured |
 | `POST /discover/match` | Search boards, rank results + library against a resume |
+| `POST /discover/match/stream` | Same, as an SSE stream with progress (used by the UI) |
 | `GET /match/sessions/{id}` | Load session |
 | `GET /match/sessions/{id}/export` | Download markdown report |
 | `GET /sessions` | List saved sessions |

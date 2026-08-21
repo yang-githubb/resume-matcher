@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { discoverAndMatch, listSources } from "@/lib/api";
+import { discoverAndMatch } from "@/lib/api";
+import type { SearchProgress } from "@/lib/api";
 import type { DiscoverResponse } from "@/types/api";
 
 const COUNTRIES = [
@@ -47,32 +48,41 @@ export function DiscoverPanel({
   const [limit, setLimit] = useState(25);
   const [minScore, setMinScore] = useState(0);
   const [report, setReport] = useState<DiscoverResponse | null>(null);
+  const [progress, setProgress] = useState<SearchProgress | null>(null);
 
   const queryClient = useQueryClient();
-  const sourcesQuery = useQuery({ queryKey: ["sources"], queryFn: listSources });
 
   const discoverMutation = useMutation({
-    onMutate: () => onBusyChange?.(true),
-    onSettled: () => onBusyChange?.(false),
+    onMutate: () => {
+      onBusyChange?.(true);
+      setProgress({ progress: 0, label: "Starting..." });
+    },
+    onSettled: () => {
+      onBusyChange?.(false);
+      setProgress(null);
+    },
     mutationFn: async () => {
       if (keywords.trim().length < 2) {
         throw new Error("Enter a role or some keywords to search for.");
       }
       const resumeId = await ensureResumeId();
-      return discoverAndMatch({
-        resume_id: resumeId,
-        preferences: {
-          keywords: keywords.trim(),
-          location: location.trim() || null,
-          seniority: seniority || null,
-          remote_only: remoteOnly,
-          country,
-          limit,
+      return discoverAndMatch(
+        {
+          resume_id: resumeId,
+          preferences: {
+            keywords: keywords.trim(),
+            location: location.trim() || null,
+            seniority: seniority || null,
+            remote_only: remoteOnly,
+            country,
+            limit,
+          },
+          explain: true,
+          explain_top: 3,
+          min_score: minScore,
         },
-        explain: true,
-        explain_top: 3,
-        min_score: minScore,
-      });
+        setProgress,
+      );
     },
     onSuccess: (data) => {
       setReport(data);
@@ -191,34 +201,30 @@ export function DiscoverPanel({
         {pending ? "Searching job boards..." : "Find & rank jobs online"}
       </button>
 
-      {pending ? (
-        <p className="muted small-hint">
-          Fetching from job boards, then scoring each one. This takes a few seconds.
-        </p>
+      {pending && progress ? (
+        <div className="search-progress">
+          <div
+            className="progress-track"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(progress.progress * 100)}
+            aria-label="Search progress"
+          >
+            <div
+              className="progress-fill"
+              style={{ width: `${Math.max(2, Math.round(progress.progress * 100))}%` }}
+            />
+          </div>
+          <p className="muted small-hint">{progress.label}</p>
+        </div>
       ) : null}
 
-      {report ? (
-        <div className="source-report">
-          <p className="muted small-hint">
-            Pulled {report.fetched_count} jobs, ranked {report.ranked_count}.
-          </p>
-          <ul className="source-list">
-            {report.sources.map((s) => (
-              <li key={s.name} className={s.error ? "muted" : ""}>
-                {s.name}: {s.error ? s.error : `${s.fetched} found`}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : (
-        <ul className="source-list">
-          {sourcesQuery.data?.map((s) => (
-            <li key={s.name} className={s.available ? "" : "muted"}>
-              {s.label} {s.available ? "" : "- not configured"}
-            </li>
-          ))}
-        </ul>
-      )}
+      {!pending && report ? (
+        <p className="muted small-hint">
+          Pulled {report.fetched_count} jobs, ranked {report.ranked_count}.
+        </p>
+      ) : null}
     </div>
   );
 }

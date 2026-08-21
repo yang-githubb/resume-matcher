@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import asyncio
+import json
+from typing import Any, AsyncIterator
+
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from app import db
 from app.explain.ollama import generate_explanation
-from app.matching.scorer import rank_jobs
+from app.matching.scorer import hybrid_score
 from app.parsers.document import structure_text
 from app.schemas import MatchBreakdown, MatchResultItem, RankResponse
 from app.sources import registry
@@ -16,6 +21,13 @@ router = APIRouter(prefix="/discover", tags=["discover"])
 MAX_FETCH = 50
 MAX_LIBRARY_JOBS = 25
 EXPLAIN_TOP_DEFAULT = 3
+
+# Fractions of the progress bar each phase owns, in order. Scoring and analysis
+# get the biggest shares because they are what actually takes the time.
+PROGRESS_SEARCH = 0.12
+PROGRESS_COLLECT = 0.22
+PROGRESS_SCORE = 0.68
+PROGRESS_ANALYSE = 1.0
 
 
 class SearchPreferences(BaseModel):
@@ -104,29 +116,48 @@ def _persist_job(job: FetchedJob) -> str:
     )
 
 
-@router.post("/match", response_model=DiscoverResponse)
-async def discover_and_match(request: DiscoverMatchRequest) -> DiscoverResponse:
+def _step(start: float, end: float, done: int, total: int) -> float:
+    """Position within a phase's slice of the bar."""
+    if total <= 0:
+        return end
+    return start + (end - start) * (done / total)
+
+
+async def _run_discovery(request: DiscoverMatchRequest) -> AsyncIterator[dict[str, Any]]:
+    """Run a search, yielding progress as it goes; the last event carries the result.
+
+    The work is split into phases whose real cost the caller cannot predict -
+    fetching, scoring and writing analyses each dominate under different
+    settings - so progress is reported from here rather than guessed at.
+    """
     resume = db.get_document(request.resume_id)
     if resume is None or resume["doc_type"] != "resume":
         raise HTTPException(status_code=404, detail="Resume not found.")
 
+    yield {"progress": 0.02, "label": "Searching job boards..."}
+
     preferences = request.preferences
     outcome = await registry.search(preferences.to_query(), preferences.sources)
+
+    yield {"progress": PROGRESS_SEARCH, "label": f"Found {len(outcome.jobs)} postings"}
 
     # Persist first so the ranker and every later session read the same rows.
     jobs: list[dict] = []
     meta: dict[str, FetchedJob] = {}
     seen: set[str] = set()
-    for fetched in outcome.jobs:
+    total_fetched = len(outcome.jobs)
+    for index, fetched in enumerate(outcome.jobs, start=1):
         doc_id = _persist_job(fetched)
-        if doc_id in seen:
-            continue
-        document = db.get_document(doc_id)
-        if document is None:
-            continue
-        seen.add(doc_id)
-        jobs.append(document)
-        meta[doc_id] = fetched
+        if doc_id not in seen:
+            document = db.get_document(doc_id)
+            if document is not None:
+                seen.add(doc_id)
+                jobs.append(document)
+                meta[doc_id] = fetched
+        yield {
+            "progress": _step(PROGRESS_SEARCH, PROGRESS_COLLECT, index, total_fetched),
+            "label": f"Reading postings ({index}/{total_fetched})",
+        }
 
     # Postings already in the library are scored too. Only hand-added ones:
     # re-ranking every previously discovered job would grow without bound and
@@ -147,7 +178,17 @@ async def discover_and_match(request: DiscoverMatchRequest) -> DiscoverResponse:
             detail += " Sources reported: " + "; ".join(errors)
         raise HTTPException(status_code=502 if errors else 404, detail=detail)
 
-    ranked = rank_jobs(jobs, resume)
+    scored: list[dict[str, Any]] = []
+    for index, job in enumerate(jobs, start=1):
+        scored.append({"job": job, **hybrid_score(resume, job)})
+        yield {
+            "progress": _step(PROGRESS_COLLECT, PROGRESS_SCORE, index, len(jobs)),
+            "label": f"Scoring against your resume ({index}/{len(jobs)})",
+        }
+        # Scoring is blocking CPU work; let the response flush between jobs.
+        await asyncio.sleep(0)
+
+    ranked = sorted(scored, key=lambda item: item["score"], reverse=True)
     if request.min_score > 0:
         ranked = [item for item in ranked if item["score"] >= request.min_score]
 
@@ -159,19 +200,33 @@ async def discover_and_match(request: DiscoverMatchRequest) -> DiscoverResponse:
         )
 
     session_id = db.create_match_session(resume_id=resume["id"])
+    explain_total = min(request.explain_top, len(ranked)) if request.explain else 0
 
     results: list[MatchResultItem] = []
     for index, item in enumerate(ranked):
         job = item["job"]
         breakdown = item["breakdown"]
-        scores = {
-            "score": item["score"],
-            "semantic_score": item["semantic_score"],
-            "keyword_score": item["keyword_score"],
-        }
-        should_explain = request.explain and index < request.explain_top
+        should_explain = index < explain_total
+
+        if should_explain:
+            yield {
+                "progress": _step(PROGRESS_SCORE, PROGRESS_ANALYSE, index, explain_total),
+                "label": f"Writing analysis ({index + 1}/{explain_total})",
+            }
+
         explanation = (
-            await generate_explanation(resume, job, breakdown, scores) if should_explain else None
+            await generate_explanation(
+                resume,
+                job,
+                breakdown,
+                {
+                    "score": item["score"],
+                    "semantic_score": item["semantic_score"],
+                    "keyword_score": item["keyword_score"],
+                },
+            )
+            if should_explain
+            else None
         )
 
         result_id = db.insert_match_result(
@@ -204,12 +259,46 @@ async def discover_and_match(request: DiscoverMatchRequest) -> DiscoverResponse:
             )
         )
 
-    return DiscoverResponse(
-        session_id=session_id,
-        resume_id=resume["id"],
-        resume_filename=resume["filename"],
-        results=results,
-        sources=[SourceReport(**vars(s)) for s in outcome.sources],
-        fetched_count=len(outcome.jobs),
-        ranked_count=len(results),
+    yield {
+        "progress": 1.0,
+        "label": "Done",
+        "result": DiscoverResponse(
+            session_id=session_id,
+            resume_id=resume["id"],
+            resume_filename=resume["filename"],
+            results=results,
+            sources=[SourceReport(**vars(s)) for s in outcome.sources],
+            fetched_count=len(outcome.jobs),
+            ranked_count=len(results),
+        ),
+    }
+
+
+@router.post("/match", response_model=DiscoverResponse)
+async def discover_and_match(request: DiscoverMatchRequest) -> DiscoverResponse:
+    async for event in _run_discovery(request):
+        if "result" in event:
+            return event["result"]
+    raise HTTPException(status_code=500, detail="Search finished without a result.")
+
+
+@router.post("/match/stream")
+async def discover_and_match_stream(request: DiscoverMatchRequest) -> StreamingResponse:
+    """Same work as /match, but reports progress while it runs."""
+
+    async def events() -> AsyncIterator[str]:
+        try:
+            async for event in _run_discovery(request):
+                payload = dict(event)
+                result = payload.pop("result", None)
+                if result is not None:
+                    payload["result"] = result.model_dump(mode="json")
+                yield f"data: {json.dumps(payload)}\n\n"
+        except HTTPException as exc:
+            yield f"data: {json.dumps({'error': exc.detail})}\n\n"
+
+    return StreamingResponse(
+        events(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )

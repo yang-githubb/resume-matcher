@@ -111,6 +111,66 @@ def test_discover_ranks_search_results_with_hand_added_jobs(client, monkeypatch)
     assert names[0] == "hand-added.txt"
 
 
+def test_discover_stream_reports_progress_then_results(client, monkeypatch):
+    import json
+
+    from app.sources.base import FetchedJob
+
+    resume = client.post(
+        "/documents/text",
+        json={"doc_type": "resume", "text": "Python engineer with FastAPI and SQL.", "label": "r.txt"},
+    ).json()
+
+    fetched = FetchedJob(
+        source="remotive",
+        external_id="7",
+        title="Backend Engineer",
+        company="Acme",
+        url="https://example.com/7",
+        description="Python, FastAPI and SQL work on backend services.",
+    )
+    monkeypatch.setattr("app.routes.discover.registry.search", _fake_search(fetched))
+
+    response = client.post(
+        "/discover/match/stream",
+        json={
+            "resume_id": resume["id"],
+            "preferences": {"keywords": "python engineer"},
+            "explain": False,
+        },
+    )
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/event-stream")
+
+    events = [
+        json.loads(frame[len("data:") :].strip())
+        for frame in response.text.split("\n\n")
+        if frame.strip().startswith("data:")
+    ]
+
+    progress = [e["progress"] for e in events]
+    assert progress == sorted(progress), "progress must never go backwards"
+    assert progress[-1] == 1.0
+
+    # Every frame but the last is progress; the last carries the payload.
+    assert all("result" not in e for e in events[:-1])
+    assert events[-1]["result"]["results"][0]["job_filename"] == "Backend Engineer - Acme"
+
+
+def test_discover_stream_reports_failure_as_an_event(client, monkeypatch):
+    import json
+
+    response = client.post(
+        "/discover/match/stream",
+        json={"resume_id": "does-not-exist", "preferences": {"keywords": "python"}},
+    )
+    # The stream has already begun, so the failure arrives in-band rather than
+    # as a status code.
+    assert response.status_code == 200
+    last = json.loads(response.text.strip().split("data:")[-1].strip())
+    assert last["error"] == "Resume not found."
+
+
 def test_discover_can_skip_the_library(client, monkeypatch):
     from app.sources.base import FetchedJob
 

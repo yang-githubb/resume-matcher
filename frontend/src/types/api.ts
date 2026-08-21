@@ -65,13 +65,6 @@ export interface SessionSummary {
   created_at: string;
 }
 
-export interface SourceInfo {
-  name: string;
-  label: string;
-  requires_key: boolean;
-  available: boolean;
-}
-
 export interface SourceReport {
   name: string;
   label: string;

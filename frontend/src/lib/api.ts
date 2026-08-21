@@ -7,7 +7,6 @@ import type {
   RankResponse,
   SearchPreferences,
   SessionSummary,
-  SourceInfo,
 } from "@/types/api";
 
 const API_BASE = "/api";
@@ -79,22 +78,69 @@ export async function deleteJob(jobId: string): Promise<void> {
   await request(`/documents/${jobId}`, { method: "DELETE" });
 }
 
-export async function listSources(): Promise<SourceInfo[]> {
-  return request<SourceInfo[]>("/discover/sources");
+export interface SearchProgress {
+  progress: number;
+  label: string;
 }
 
-export async function discoverAndMatch(payload: {
+interface DiscoverPayload {
   resume_id: string;
   preferences: SearchPreferences;
   explain?: boolean;
   explain_top?: number;
   min_score?: number;
-}): Promise<DiscoverResponse> {
-  return request<DiscoverResponse>("/discover/match", {
+}
+
+/**
+ * Runs a search, reporting progress as the server works through it.
+ *
+ * The server streams newline-delimited SSE frames; the final one carries the
+ * results. A plain POST would leave the user staring at a spinner for the
+ * length of a fetch, a scoring pass and several LLM calls.
+ */
+export async function discoverAndMatch(
+  payload: DiscoverPayload,
+  onProgress?: (progress: SearchProgress) => void,
+): Promise<DiscoverResponse> {
+  const response = await fetch(`${API_BASE}/discover/match/stream`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
+
+  if (!response.ok || !response.body) {
+    throw new Error(await parseError(response, `Search failed (${response.status})`));
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let result: DiscoverResponse | null = null;
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const frames = buffer.split("\n\n");
+    buffer = frames.pop() ?? "";
+
+    for (const frame of frames) {
+      const line = frame.trim();
+      if (!line.startsWith("data:")) continue;
+
+      const event = JSON.parse(line.slice(5).trim());
+      if (event.error) throw new Error(event.error);
+      if (event.result) {
+        result = event.result as DiscoverResponse;
+      } else {
+        onProgress?.({ progress: event.progress, label: event.label });
+      }
+    }
+  }
+
+  if (!result) throw new Error("Search ended before returning results.");
+  return result;
 }
 
 export async function getSession(sessionId: string): Promise<RankResponse> {

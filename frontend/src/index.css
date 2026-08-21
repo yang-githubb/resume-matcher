@@ -295,15 +295,23 @@ a.btn {
   margin-bottom: 1rem;
 }
 
-.source-list {
-  list-style: none;
-  padding: 0;
-  margin: 1rem 0 0;
-  font-size: 0.78rem;
-  color: var(--muted);
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
+.search-progress {
+  margin-top: 1rem;
+}
+
+.progress-track {
+  height: 8px;
+  border-radius: 999px;
+  background: #0f1628;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  border-radius: 999px;
+  transition: width 0.25s ease-out;
 }
 
 .result-card.selected {
