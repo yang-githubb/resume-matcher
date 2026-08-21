@@ -1,166 +1,214 @@
 # Resume Matcher
 
-Local-first resume ↔ job matcher with **hybrid scoring** (semantic embeddings + keyword overlap), **SQLite persistence**, **Ollama explanations + follow-up chat**, and **online job discovery** that pulls live postings from public job boards and ranks them against your resume.
+Find the jobs that actually fit your CV. Add your resume, say what you are looking
+for, and the app searches public job boards, scores every posting against your
+resume, and explains the fit — all running locally against your own database and
+your own LLM.
+
+- **Hybrid scoring** — semantic embeddings blended with keyword and skill overlap
+- **Online discovery** — pulls live postings from public job board APIs
+- **Local LLM analysis** — Ollama writes the strengths/gaps breakdown and answers follow-ups
+- **Local-first** — SQLite on disk; your resume never leaves the machine except as a job-board search query
 
 ## Stack
 
 | Layer | Tech |
 |-------|------|
 | Backend | Python, FastAPI, SQLite |
-| Embeddings | `sentence-transformers` (local CPU) |
-| LLM | Ollama (`llama3.1:8b`) — uses **9070 XT** GPU when Ollama is running |
-| Frontend | Vite + React + TypeScript + TanStack Query |
-| Parsing | PyMuPDF (PDF), python-docx (DOCX), plain text paste |
+| Embeddings | `sentence-transformers` (`all-MiniLM-L6-v2`, local CPU) |
+| LLM | Ollama (`llama3.1:8b`) |
+| Frontend | Vite, React, TypeScript, TanStack Query |
+| Parsing | PyMuPDF (PDF), python-docx (DOCX), plain-text paste |
 
-## How to run
+## Quick start
 
 ### Prerequisites
 
-1. **Python 3.11+** and **Node.js 18+**
-2. **Ollama** installed and running:
-   ```powershell
-   ollama pull llama3.1:8b
-   ollama serve
-   ```
+- **Python 3.11+** and **Node.js 18+**
+- **Ollama** running locally (optional — ranking works without it, analysis falls back
+  to a rule-based summary):
 
-### One-time setup
+  ```bash
+  ollama pull llama3.1:8b
+  ollama serve
+  ```
 
-```powershell
-cd c:\Users\Yang5\Documents\CodeProject\resume-matcher\backend
+### Setup
+
+From the repository root:
+
+```bash
+cd backend
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+.venv/Scripts/activate      # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
-copy .env.example .env
+cp .env.example .env
+```
 
-cd ..\frontend
+```bash
+cd frontend
 npm install
 ```
 
-### Start everything (easiest)
+### Run
 
-```powershell
-cd c:\Users\Yang5\Documents\CodeProject\resume-matcher\scripts
-.\start-dev.ps1
+On Windows, `scripts/start-dev.ps1` launches both servers. Otherwise use two terminals:
+
+```bash
+cd backend && .venv/Scripts/activate && python -m uvicorn app.main:app --reload --port 8000
 ```
 
-Then open **http://localhost:5173**
-
-### Manual start (two terminals)
-
-**Terminal 1 — API**
-```powershell
-cd c:\Users\Yang5\Documents\CodeProject\resume-matcher\backend
-.\.venv\Scripts\Activate.ps1
-python -m uvicorn app.main:app --reload --port 8000
-```
-
-**Terminal 2 — UI**
-```powershell
-cd c:\Users\Yang5\Documents\CodeProject\resume-matcher\frontend
-npm run dev
+```bash
+cd frontend && npm run dev
 ```
 
 | URL | What |
 |-----|------|
 | http://localhost:5173 | Web app |
-| http://localhost:8000/docs | API docs |
-| http://localhost:8000/health | Health check |
+| http://localhost:8000/docs | Interactive API docs |
+| http://localhost:8000/health | Status and model config |
 
-### Run tests
+> On Windows the `--reload` watcher can miss changes. If an edit does not seem to
+> take effect, restart the backend.
 
-```powershell
-cd backend
-.\.venv\Scripts\Activate.ps1
-pytest -q
-```
+## Using it
 
-## Find jobs online
+1. Add your **resume** — upload a PDF/DOCX or paste the text
+2. Set what you want: role, experience level, city, country, remote-only, how many
+   postings to pull, and a minimum match score
+3. Click **Find & rank jobs online**
 
-Instead of pasting postings by hand, **Find jobs online** collects your preferences
-first (role, experience level, city, country, remote-only, how many to pull, minimum
-match), then queries public job boards, ranks every result against your resume, and
-links straight to the posting.
+That is the only ranking action. It searches the boards, scores every result against
+your resume, writes an analysis for the top few, and links straight to each posting.
 
-| Source | Key needed | Covers |
-|--------|-----------|--------|
+Then click any result for its **analysis**, ask **follow-up questions** in the chat
+panel, or **Export .md** to save the report.
+
+**One resume at a time.** Adding another replaces it, clears the rankings the previous
+one produced, and deletes the old copy — except where a saved session still refers to it.
+
+**The job library** holds postings you add by hand plus everything past searches pulled
+in. Hand-added jobs are ranked alongside every search, so a posting you found yourself
+is scored too. Previously discovered jobs stay for their apply links but are not
+re-ranked, so each search returns fresh results rather than resurfacing stale ones.
+
+**Saved sessions** keep the 5 most recent runs; older ones are deleted along with their
+results and chat history.
+
+## Job sources
+
+| Source | API key | Covers |
+|--------|---------|--------|
 | Remotive | no | Remote roles |
 | RemoteOK | no | Remote roles |
-| Arbeitnow | no | EU roles (incl. onsite) |
+| Arbeitnow | no | EU roles, including onsite |
 | Jobicy | no | Remote roles |
-| JSearch | yes (free) | Google for Jobs — **Malaysia** + Asia, worldwide |
-| Adzuna | yes (free) | Onsite + remote, 18 countries (**no Malaysia**) |
+| JSearch | free tier | Google for Jobs — **Malaysia**, Asia, worldwide |
+| Adzuna | free tier | Onsite and remote across 18 countries (**not Malaysia**) |
 
-The four keyless boards work with no setup, but they are remote-focused.
+The four keyless boards work with no setup but are remote-focused.
 
-**For Malaysian / Asian listings, use JSearch.** It reads Google for Jobs, so it
-surfaces JobStreet, LinkedIn and Indeed postings. Subscribe to the free JSearch tier
-on [RapidAPI](https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch) and set
+**For Malaysian or Asian listings, use JSearch.** It reads Google for Jobs, so it
+surfaces JobStreet, LinkedIn and Indeed postings. Subscribe to the free tier on
+[RapidAPI](https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch) and set
 `JSEARCH_API_KEY` in `backend/.env`.
 
-Adzuna covers 18 countries — Singapore yes, **Malaysia no**. Picking an unsupported
-country reports that plainly rather than quietly returning another country's jobs.
+Adzuna serves 18 countries — Singapore yes, Malaysia no. Choosing a country it does
+not cover says so plainly rather than quietly returning another country's jobs.
 
-These are official public APIs, not scraped pages — LinkedIn and Indeed block
-automated access and their terms forbid it, so they are deliberately not included.
-Postings are filtered for relevance to your keywords (title-weighted) before your
-resume is scored against them.
+These are official public APIs, not scraped pages. LinkedIn and Indeed block automated
+access and their terms forbid it, so they are not scraped directly. A failing board is
+skipped rather than failing the whole search.
 
-## Using the app
+Postings are filtered for relevance to your keywords — weighted toward the job title,
+since boards match free text loosely — before your resume is scored against them.
 
-1. Add your **resume** (file or paste)
-2. Set your preferences and click **Find & rank jobs online** — the single action
-3. Click a result for **analysis**
-4. Ask **follow-up questions** in the chat panel
-5. **Export .md** to save the report
-6. Reload past runs from **Saved sessions** — the 5 most recent are kept
-
-Postings you add to the **job library** by hand are ranked alongside every search,
-so a job you found yourself is scored against your resume too. Jobs pulled from
-previous searches stay in the library for their apply links, but are not re-ranked —
-each search returns fresh results rather than resurfacing stale ones.
-
-Ranking works without Ollama. Analysis falls back to a rule-based summary if Ollama is offline.
-
-## Hybrid score
+## How scoring works
 
 ```
-overall = 0.6 × semantic_similarity + 0.4 × keyword_blend
-keyword_blend = 0.6 × skill_overlap + 0.4 × keyword_overlap
+overall        = 0.6 x semantic_similarity + 0.4 x keyword_blend
+keyword_blend  = 0.6 x skill_overlap + 0.4 x keyword_overlap
 ```
 
-Tune in `backend/.env`.
+Semantic similarity is the cosine distance between embeddings of the resume and the
+posting. Scores are on a 0–100 scale. Weights are configurable in `backend/.env`.
+
+## Configuration
+
+All settings live in `backend/.env` (see `.env.example`):
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama endpoint |
+| `OLLAMA_MODEL` | `llama3.1:8b` | Model used for analysis and chat |
+| `EMBEDDING_MODEL` | `all-MiniLM-L6-v2` | Sentence-transformers model |
+| `EMBEDDING_DEVICE` | `cpu` | Set `cuda` if you have a supported GPU |
+| `SEMANTIC_WEIGHT` / `KEYWORD_WEIGHT` | `0.6` / `0.4` | Score blend, must sum to 1.0 |
+| `DATABASE_PATH` | `./data/resume_matcher.db` | SQLite file |
+| `UPLOAD_DIR` | `./data/uploads` | Stored uploads |
+| `JSEARCH_API_KEY` | empty | Enables the JSearch source |
+| `ADZUNA_APP_ID` / `ADZUNA_APP_KEY` | empty | Enables the Adzuna source |
 
 ## API
 
 | Endpoint | Purpose |
 |----------|---------|
-| `GET /health` | Status + model config |
-| `POST /documents/upload` | Upload PDF/DOCX |
-| `POST /documents/text` | Paste plain text |
-| `PATCH /documents/{id}` | Edit extracted text |
+| `GET /health` | Status and model config |
+| `POST /documents/upload` | Upload a PDF/DOCX resume or job |
+| `POST /documents/text` | Add a resume or job as plain text |
 | `GET /documents/jobs?origin=` | List jobs — `manual`, `discovered` or `all` |
-| `GET /discover/sources` | List job boards + which are configured |
-| `POST /discover/match` | Search boards, rank results + library against a resume |
-| `POST /discover/match/stream` | Same, as an SSE stream with progress (used by the UI) |
-| `GET /match/sessions/{id}` | Load session |
-| `GET /match/sessions/{id}/export` | Download markdown report |
-| `GET /sessions` | List saved sessions |
+| `DELETE /documents/{id}` | Remove a document |
+| `GET /discover/sources` | Which boards exist and which are configured |
+| `POST /discover/match` | Search boards and rank against a resume |
+| `POST /discover/match/stream` | Same, streamed with progress (used by the UI) |
+| `GET /sessions` | List saved runs |
+| `GET /sessions/{id}` | Reload a run |
+| `GET /sessions/{id}/export` | Download the run as markdown |
 | `GET /chat/{session_id}` | Chat history |
-| `POST /chat` | Follow-up message |
+| `POST /chat` | Ask a follow-up about a match |
 
 ## Project layout
 
 ```text
 resume-matcher/
 ├── backend/
-│   ├── app/           # FastAPI app
-│   │   └── sources/   # Job board adapters (one module per board)
-│   ├── fixtures/      # Sample job + resumes (test fixtures)
+│   ├── app/
+│   │   ├── main.py         # App setup, /health
+│   │   ├── config.py       # Settings from .env
+│   │   ├── db.py           # SQLite schema, migrations, queries
+│   │   ├── schemas.py      # Shared request/response models
+│   │   ├── routes/         # documents, discover, sessions, chat
+│   │   ├── sources/        # One module per job board, behind a shared adapter
+│   │   ├── matching/       # Embeddings, keyword overlap, hybrid score
+│   │   ├── explain/        # Ollama prompts + offline fallback
+│   │   ├── parsers/        # PDF/DOCX text extraction and skill parsing
+│   │   └── services/       # Markdown export
+│   ├── fixtures/           # Sample resume and job used by tests
 │   └── tests/
-├── frontend/          # Vite + React UI
-└── scripts/           # start-dev.ps1
+├── frontend/
+│   └── src/
+│       ├── App.tsx         # Layout, health pill, saved sessions
+│       ├── components/     # Resume input, search panel, library, results, chat
+│       ├── lib/api.ts      # Typed API client, including the SSE reader
+│       └── types/api.ts    # Response types mirroring the backend schemas
+└── scripts/                # start-dev.ps1
 ```
 
-## First-run note
+## Development
 
-The first match downloads the embedding model (`all-MiniLM-L6-v2`, ~90MB). After that, scoring a batch of jobs is fast on CPU.
+```bash
+cd backend && .venv/Scripts/activate && pytest -q     # 29 tests
+cd frontend && npm run lint && npx tsc --noEmit       # lint + typecheck
+cd frontend && npm run build                          # production build
+```
+
+Adding a job board means writing one module in `backend/app/sources/` exposing
+`NAME`, `LABEL`, `REQUIRES_KEY`, `is_available()` and `fetch(client, query)`, then
+listing it in `registry.MODULES`. Relevance filtering, deduplication, error handling
+and concurrency are handled for you.
+
+## Notes
+
+The first search downloads the embedding model (~90MB) and is slower than the rest.
+After that, scoring a batch of postings takes a few seconds on CPU; the analysis step
+is usually what you are waiting for.

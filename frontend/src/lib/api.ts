@@ -57,17 +57,6 @@ export async function createTextDocument(payload: {
   });
 }
 
-export async function updateDocumentText(
-  docId: string,
-  rawText: string,
-): Promise<ParseResponse> {
-  return request<ParseResponse>(`/documents/${docId}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ raw_text: rawText }),
-  });
-}
-
 export async function listJobs(
   origin: "manual" | "discovered" | "all" = "manual",
 ): Promise<JobSummary[]> {
@@ -144,7 +133,7 @@ export async function discoverAndMatch(
 }
 
 export async function getSession(sessionId: string): Promise<RankResponse> {
-  return request<RankResponse>(`/match/sessions/${sessionId}`);
+  return request<RankResponse>(`/sessions/${sessionId}`);
 }
 
 export async function sendChat(payload: {
@@ -170,5 +159,5 @@ export async function getChatHistory(
 }
 
 export function exportSessionUrl(sessionId: string): string {
-  return `${API_BASE}/match/sessions/${sessionId}/export`;
+  return `${API_BASE}/sessions/${sessionId}/export`;
 }

@@ -10,13 +10,7 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from app import db
 from app.config import settings
 from app.parsers.document import extract_text, structure_text
-from app.schemas import (
-    JobSummary,
-    ParseResponse,
-    StructuredDocument,
-    TextDocumentRequest,
-    UpdateDocumentRequest,
-)
+from app.schemas import JobSummary, ParseResponse, StructuredDocument, TextDocumentRequest
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 
@@ -90,20 +84,6 @@ async def upload_document(
     )
 
 
-@router.get("/{doc_id}", response_model=ParseResponse)
-async def get_document(doc_id: str) -> ParseResponse:
-    doc = db.get_document(doc_id)
-    if doc is None:
-        raise HTTPException(status_code=404, detail="Document not found.")
-    return ParseResponse(
-        id=doc["id"],
-        doc_type=doc["doc_type"],
-        filename=doc["filename"],
-        raw_text=doc["raw_text"],
-        structured=StructuredDocument(**doc["structured"]),
-    )
-
-
 @router.post("/text", response_model=ParseResponse)
 async def create_from_text(request: TextDocumentRequest) -> ParseResponse:
     text = request.text.strip()
@@ -119,27 +99,6 @@ async def create_from_text(request: TextDocumentRequest) -> ParseResponse:
         id=doc_id,
         doc_type=request.doc_type,
         filename=request.label,
-        raw_text=text,
-        structured=StructuredDocument(**structured),
-    )
-
-
-@router.patch("/{doc_id}", response_model=ParseResponse)
-async def update_document_text(doc_id: str, request: UpdateDocumentRequest) -> ParseResponse:
-    doc = db.get_document(doc_id)
-    if doc is None:
-        raise HTTPException(status_code=404, detail="Document not found.")
-
-    text = request.raw_text.strip()
-    structured = structure_text(text)
-    updated = db.update_document(doc_id, text, structured)
-    if not updated:
-        raise HTTPException(status_code=404, detail="Document not found.")
-
-    return ParseResponse(
-        id=doc_id,
-        doc_type=doc["doc_type"],
-        filename=doc["filename"],
         raw_text=text,
         structured=StructuredDocument(**structured),
     )

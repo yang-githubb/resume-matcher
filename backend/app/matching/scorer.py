@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-import numpy as np
-
 from app.config import settings
 from app.matching.embedder import cosine_similarity, embed_text
 from app.matching.keywords import overlap_score
