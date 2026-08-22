@@ -59,6 +59,15 @@ def test_dedupe_drops_same_posting_syndicated_across_boards():
     assert unique[0].source == "remotive"  # first source wins
 
 
+def test_html_entities_in_titles_are_decoded():
+    """Only the description runs through html_to_text, so these need their own pass."""
+    job = make_job("Sales Advisor - H&amp;M", "Bell &amp; Co", location="Montr&eacute;al")
+    assert job.title == "Sales Advisor - H&M"
+    assert job.company == "Bell & Co"
+    assert job.location == "Montréal"
+    assert job.label == "Sales Advisor - H&M - Bell & Co"
+
+
 def test_document_text_leads_with_title_and_company():
     job = make_job("Backend Engineer", "Acme", description="Build APIs.")
     text = job.to_document_text()
