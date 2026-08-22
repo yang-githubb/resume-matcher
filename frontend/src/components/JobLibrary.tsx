@@ -49,18 +49,20 @@ export function JobLibrary({ disabled }: JobLibraryProps) {
   const manualCount = jobs.length - onlineCount;
 
   return (
-    <div className="job-library">
-      <div className="panel-header">
-        <div>
-          <h2>Job library ({jobs.length})</h2>
-          {jobs.length > 0 ? (
-            <p className="muted small-hint">
-              {manualCount} added by hand, {onlineCount} found online. Jobs you add by hand
-              are ranked alongside every search.
-            </p>
-          ) : null}
-        </div>
-      </div>
+    // Collapsed by default: the library runs to hundreds of rows and would
+    // otherwise crowd out the controls above it in the rail.
+    <details className="job-library">
+      <summary>
+        <h2>Job library</h2>
+        <span className="badge badge-count">{jobs.length}</span>
+      </summary>
+
+      {jobs.length > 0 ? (
+        <p className="muted small-hint">
+          {manualCount} added by hand, {onlineCount} found online. Jobs you add by hand are
+          ranked alongside every search.
+        </p>
+      ) : null}
 
       <DocumentInput
         key={inputKey}
@@ -119,6 +121,6 @@ export function JobLibrary({ disabled }: JobLibraryProps) {
           })}
         </ul>
       )}
-    </div>
+    </details>
   );
 }

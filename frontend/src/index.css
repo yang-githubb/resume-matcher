@@ -2,15 +2,15 @@
   font-family: "Segoe UI", system-ui, sans-serif;
   line-height: 1.5;
   color: #e8edf5;
-  background: #0b1020;
   --bg: #0b1020;
+  --rail: #0e1526;
   --panel: #121a2e;
-  --border: #24304a;
+  --raised: #0f1628;
+  --border: #222d45;
   --text: #e8edf5;
-  --muted: #9aa8c0;
+  --muted: #93a1ba;
   --accent: #5b8cff;
   --accent-2: #34d399;
-  --warn: #f59e0b;
   --danger: #f87171;
 }
 
@@ -18,91 +18,156 @@
   box-sizing: border-box;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
   margin: 0;
-  min-height: 100vh;
-  background: radial-gradient(circle at top, #152040, var(--bg) 55%);
+  background: var(--bg);
   color: var(--text);
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
 
-.app-shell {
-  max-width: 1240px;
-  margin: 0 auto;
-  padding: 2.75rem 1.75rem 4rem;
+/* Setup lives in a fixed rail so the rankings never scroll out of reach. */
+.workspace {
+  display: grid;
+  grid-template-columns: 350px minmax(0, 1fr);
+  height: 100%;
 }
 
-.hero {
+.sidebar {
+  background: var(--rail);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 1.25rem 1.25rem 3rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand h1 {
+  font-size: 1.15rem;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex-shrink: 0;
+}
+
+.status-dot[data-status="ok"] {
+  background: var(--accent-2);
+}
+
+.status-dot[data-status="degraded"] {
+  background: #f59e0b;
+}
+
+.rail-section {
+  padding: 1.25rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.rail-section:last-child {
+  border-bottom: none;
+}
+
+.rail-section > h2 {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+  margin: 0 0 0.85rem;
+}
+
+.results-area {
+  overflow-y: auto;
+  padding: 1.6rem 1.75rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.results-header {
   display: flex;
   justify-content: space-between;
-  gap: 1.5rem;
   align-items: flex-start;
-  margin-bottom: 2.25rem;
+  gap: 1rem;
+  margin-bottom: 1.4rem;
 }
 
-.eyebrow {
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.78rem;
-  color: var(--muted);
-  margin: 0 0 0.6rem;
-}
-
-h1 {
+.results-header h2 {
   margin: 0;
-  font-size: 2.4rem;
+  font-size: 1.45rem;
+}
+
+.results-header .small-hint {
+  margin-top: 0.3rem;
+}
+
+/* Rankings on the left, the selected job's detail alongside it. */
+.results-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+  flex: 1;
+  min-height: 0;
+}
+
+.detail-col {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem;
+  position: sticky;
+  top: 0;
+}
+
+.detail-col > h3 {
+  margin: 0 0 0.9rem;
+  font-size: 1rem;
+}
+
+.empty-state {
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  padding: 3rem 2rem;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.empty-state h3 {
+  margin: 0 0 0.6rem;
+  font-size: 1.1rem;
+}
+
+.empty-state .muted {
+  max-width: 42ch;
+  margin: 0 auto;
 }
 
 h2,
 h3 {
   margin: 0 0 0.9rem;
-}
-
-.lede {
-  color: var(--muted);
-  max-width: 58ch;
-  margin-top: 0.75rem;
-}
-
-.health-pill {
-  border: 1px solid var(--border);
-  background: var(--panel);
-  padding: 0.7rem 1.1rem;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  white-space: nowrap;
-}
-
-.health-pill[data-status="ok"] {
-  border-color: #1f6f4a;
-  color: #b7f7d7;
-}
-
-.health-pill[data-status="degraded"] {
-  border-color: #7c4a12;
-  color: #fcd9a0;
-}
-
-.grid-2 {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 1.75rem;
-}
-
-.panel {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 1.5rem;
-}
-
-section.panel {
-  margin-bottom: 1.75rem;
 }
 
 .upload-card {
@@ -145,18 +210,6 @@ section.panel {
   padding: 0.7rem 0.85rem;
   resize: vertical;
   min-height: 140px;
-}
-
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.75rem;
-  margin-bottom: 1.1rem;
-}
-
-.panel-header h2 {
-  margin: 0;
 }
 
 a.btn {
@@ -210,22 +263,24 @@ a.btn {
   color: var(--danger);
 }
 
+/* The results area scrolls as a whole, so the list itself runs full height. */
 .results-list {
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
-  /* A search can return 50 postings; keep the panel a fixed size. */
-  max-height: 560px;
-  overflow-y: auto;
-  padding-right: 0.5rem;
+  gap: 0.75rem;
 }
 
 .result-card {
-  background: #0f1628;
+  background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 1.1rem;
+  padding: 1rem 1.1rem;
   color: inherit;
+  transition: border-color 0.15s ease;
+}
+
+.result-card:hover {
+  border-color: #35456b;
 }
 
 .result-main {
@@ -281,9 +336,11 @@ a.btn {
   font: inherit;
 }
 
+/* The rail is too narrow for paired fields; they stack instead. */
 .field-row {
   display: flex;
-  gap: 1.25rem;
+  flex-direction: column;
+  gap: 0;
 }
 
 .checkbox-field {
@@ -343,12 +400,24 @@ a.btn {
 
 .rank {
   color: var(--muted);
+  font-size: 0.85rem;
+  flex-shrink: 0;
 }
 
+.result-header strong {
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+/* The score is the answer the page exists to give, so it reads loudest. */
 .score {
   margin-left: auto;
+  font-size: 1.35rem;
   font-weight: 700;
   color: var(--accent-2);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  flex-shrink: 0;
 }
 
 .score-breakdown {
@@ -441,7 +510,77 @@ a.btn {
   margin: 0;
   display: flex;
   flex-direction: column;
+  gap: 0.25rem;
+}
+
+.session-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
+  color: inherit;
+  cursor: pointer;
+}
+
+.session-item:hover {
+  background: var(--panel);
+}
+
+.session-item.current {
+  border-color: var(--accent);
+  background: var(--panel);
+}
+
+.session-name {
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-time {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.job-library > summary {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
+  cursor: pointer;
+  list-style: none;
+  margin-bottom: 0.25rem;
+}
+
+.job-library > summary::-webkit-details-marker {
+  display: none;
+}
+
+.job-library > summary::before {
+  content: "▸";
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.job-library[open] > summary::before {
+  content: "▾";
+}
+
+.job-library > summary h2 {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+  margin: 0;
+}
+
+.badge-count {
+  margin-left: auto;
 }
 
 .job-list {
@@ -454,7 +593,7 @@ a.btn {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem;
   padding: 0.85rem 0;
   border-bottom: 1px solid var(--border);
 }
@@ -542,14 +681,39 @@ a.btn {
   text-align: left;
 }
 
-@media (max-width: 860px) {
-  .grid-2,
-  .hero {
-    grid-template-columns: 1fr;
-    flex-direction: column;
+/* Not enough room for rankings and detail side by side: stack them. */
+@media (max-width: 1150px) {
+  .results-split {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .app-shell {
-    padding: 1.75rem 1.1rem 3rem;
+  .detail-col {
+    position: static;
+  }
+}
+
+/* Below this the rail cannot hold its width, so the whole thing stacks. */
+@media (max-width: 820px) {
+  html,
+  body,
+  #root {
+    height: auto;
+  }
+
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+
+  .sidebar {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    overflow-y: visible;
+    padding-bottom: 1.25rem;
+  }
+
+  .results-area {
+    overflow-y: visible;
+    padding: 1.5rem 1.1rem 3rem;
   }
 }
