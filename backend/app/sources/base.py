@@ -64,10 +64,17 @@ class FetchedJob:
     salary: str | None = None
     tags: list[str] = field(default_factory=list)
 
+    def __post_init__(self) -> None:
+        # Boards hand these back HTML-escaped ("H&amp;M"). Only the description
+        # goes through html_to_text, so they are unescaped here instead - once,
+        # rather than in every adapter.
+        self.title = unescape(self.title).strip()
+        self.company = unescape(self.company).strip()
+        self.location = unescape(self.location).strip()
+
     @property
     def label(self) -> str:
-        company = self.company.strip() or "Unknown company"
-        return f"{self.title.strip()} - {company}"
+        return f"{self.title} - {self.company or 'Unknown company'}"
 
     def to_document_text(self) -> str:
         """Build the text the embedder and keyword scorer will see.

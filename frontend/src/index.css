@@ -1,16 +1,27 @@
 :root {
   font-family: "Segoe UI", system-ui, sans-serif;
   line-height: 1.5;
-  color: #e8edf5;
-  --bg: #0b1020;
-  --rail: #0e1526;
-  --panel: #121a2e;
-  --raised: #0f1628;
-  --border: #222d45;
-  --text: #e8edf5;
-  --muted: #93a1ba;
-  --accent: #5b8cff;
-  --accent-2: #34d399;
+  color: #ffffff;
+
+  /* Greyscale surfaces, lightest where the content sits highest. */
+  --bg: #000000;
+  --rail: #080808;
+  --raised: #0d0d0d;
+  --panel: #151515;
+  --border: #2a2a2a;
+  --border-strong: #454545;
+
+  --text: #ffffff;
+  --muted: #a0a0a0;
+
+  /* White carries emphasis and interaction; colour is left to carry meaning. */
+  --accent: #ffffff;
+  --on-accent: #000000;
+
+  --good: #4ade80;
+  --good-border: #2f6b45;
+  --warn: #fbbf24;
+  --warn-border: #6b5220;
   --danger: #f87171;
 }
 
@@ -74,11 +85,11 @@ textarea {
 }
 
 .status-dot[data-status="ok"] {
-  background: var(--accent-2);
+  background: var(--good);
 }
 
 .status-dot[data-status="degraded"] {
-  background: #f59e0b;
+  background: var(--warn);
 }
 
 .rail-section {
@@ -205,7 +216,7 @@ h3 {
   width: 100%;
   border-radius: 8px;
   border: 1px solid var(--border);
-  background: #0f1628;
+  background: var(--raised);
   color: var(--text);
   padding: 0.7rem 0.85rem;
   resize: vertical;
@@ -220,7 +231,7 @@ a.btn {
 
 .btn {
   border: 1px solid var(--border);
-  background: #1a2440;
+  background: var(--panel);
   color: var(--text);
   border-radius: 8px;
   padding: 0.6rem 1.05rem;
@@ -239,7 +250,7 @@ a.btn {
 .btn.primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #071022;
+  color: var(--on-accent);
   font-weight: 600;
 }
 
@@ -250,7 +261,7 @@ a.btn {
 .btn.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #071022;
+  color: var(--on-accent);
 }
 
 .muted {
@@ -280,7 +291,7 @@ a.btn {
 }
 
 .result-card:hover {
-  border-color: #35456b;
+  border-color: var(--border-strong);
 }
 
 .result-main {
@@ -305,8 +316,9 @@ a.btn {
   display: inline-block;
   margin-top: 0.7rem;
   font-size: 0.85rem;
-  color: var(--accent-2);
-  text-decoration: none;
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .apply-link:hover {
@@ -328,7 +340,7 @@ a.btn {
 
 .discover .field input[type="text"],
 .discover .field select {
-  background: #0f1628;
+  background: var(--raised);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 0.6rem 0.7rem;
@@ -375,14 +387,14 @@ a.btn {
 .progress-track {
   height: 8px;
   border-radius: 999px;
-  background: #0f1628;
+  background: var(--raised);
   border: 1px solid var(--border);
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  background: var(--accent);
   border-radius: 999px;
   transition: width 0.25s ease-out;
 }
@@ -414,7 +426,7 @@ a.btn {
   margin-left: auto;
   font-size: 1.35rem;
   font-weight: 700;
-  color: var(--accent-2);
+  color: var(--text);
   font-variant-numeric: tabular-nums;
   line-height: 1;
   flex-shrink: 0;
@@ -443,18 +455,18 @@ a.btn {
 }
 
 .chip.good {
-  border-color: #1f6f4a;
-  color: #b7f7d7;
+  border-color: var(--good-border);
+  color: var(--good);
 }
 
 .chip.warn {
-  border-color: #7c4a12;
-  color: #fcd9a0;
+  border-color: var(--warn-border);
+  color: var(--warn);
 }
 
 .analysis {
   white-space: pre-wrap;
-  background: #0f1628;
+  background: var(--raised);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 1.1rem;
@@ -479,7 +491,7 @@ a.btn {
 }
 
 .chat-bubble {
-  background: #0f1628;
+  background: var(--raised);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 0.7rem 0.9rem;
@@ -487,7 +499,7 @@ a.btn {
 }
 
 .chat-bubble.user {
-  border-color: #2a4f9c;
+  border-color: var(--border-strong);
 }
 
 .chat-input-row {
@@ -499,7 +511,7 @@ a.btn {
   flex: 1;
   border-radius: 8px;
   border: 1px solid var(--border);
-  background: #0f1628;
+  background: var(--raised);
   color: var(--text);
   padding: 0.6rem 0.8rem;
 }
@@ -654,13 +666,13 @@ a.btn {
 }
 
 .badge-manual {
-  border-color: #3a4a72;
-  color: #b8c6ea;
+  border-color: var(--border-strong);
+  color: var(--muted);
 }
 
 .badge-online {
-  border-color: #1f6f4a;
-  color: #b7f7d7;
+  border-color: var(--good-border);
+  color: var(--good);
 }
 
 .small-hint {
