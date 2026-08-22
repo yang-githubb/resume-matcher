@@ -72,13 +72,16 @@ textarea {
   min-width: 0;
 }
 
+/* The panel itself does not scroll: the analysis and the chat log each take
+   their own, so the conversation can fill whatever height is left over. */
 .detail-panel {
   grid-area: detail;
   background: var(--rail);
   border-left: 1px solid var(--border);
-  overflow-y: auto;
-  padding: 1.5rem 1.4rem 2rem;
+  overflow: hidden;
+  padding: 1.5rem 1.4rem 1.5rem;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
@@ -466,24 +469,43 @@ a.btn {
   font-family: inherit;
   font-size: 0.92rem;
   line-height: 1.6;
-  max-height: 320px;
+  /* Measured against the panel, not the viewport: the panel is often much
+     shorter, and a viewport-based cap left the chat below it with no room.
+     It gives height back when the conversation needs it. */
+  max-height: 40%;
+  min-height: 90px;
   overflow: auto;
+  flex: 0 1 auto;
 }
 
+/* Takes every pixel the analysis above it does not need. */
 .chat-panel {
-  margin-top: 1.5rem;
+  margin-top: 1rem;
   border-top: 1px solid var(--border);
-  padding-top: 1.25rem;
+  padding-top: 0.9rem;
+  flex: 1 1 auto;
+  min-height: 210px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-panel > h3 {
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+  margin: 0 0 0.5rem;
 }
 
 .chat-log {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  min-height: 140px;
-  max-height: 340px;
+  flex: 1;
+  min-height: 60px;
   overflow-y: auto;
-  margin: 0.9rem 0;
+  margin: 0 0 0.7rem;
   padding-right: 0.25rem;
 }
 
@@ -558,6 +580,7 @@ a.btn {
 .chat-input-row {
   display: flex;
   gap: 0.6rem;
+  flex-shrink: 0;
 }
 
 .chat-input-row input {
@@ -801,5 +824,17 @@ a.btn {
     border-left: none;
     border-top: 1px solid var(--border);
     padding: 1.5rem 1.1rem 3rem;
+  }
+
+  /* Stacked, the panel grows with the page, so there is no leftover height
+     for the log to claim - it falls back to a readable fixed size. */
+  .chat-log {
+    flex: initial;
+    min-height: 260px;
+    max-height: 60vh;
+  }
+
+  .analysis {
+    max-height: none;
   }
 }
