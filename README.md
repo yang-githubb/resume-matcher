@@ -1,14 +1,47 @@
-# Resume Matcher
+<h1 align="center">Resume Matcher</h1>
 
-Find the jobs that actually fit your CV. Add your resume, say what you are looking
-for, and the app searches public job boards, scores every posting against your
-resume, and explains the fit — all running locally against your own database and
-your own LLM.
+<p align="center">
+  Find the jobs that actually fit your CV — searched, scored and explained on your own machine.
+</p>
 
-- **Hybrid scoring** — semantic embeddings blended with keyword and skill overlap
-- **Online discovery** — pulls live postings from public job board APIs
-- **Local LLM analysis** — Ollama writes the strengths/gaps breakdown and answers follow-ups
-- **Local-first** — SQLite on disk; your resume never leaves the machine except as a job-board search query
+<p align="center">
+  <img alt="Python" src="https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white">
+  <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white">
+  <img alt="React" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white">
+  <img alt="Ollama" src="https://img.shields.io/badge/Ollama-local%20LLM-black">
+  <img alt="SQLite" src="https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white">
+</p>
+
+![The Resume Matcher workspace: setup on the left, ranked jobs in the middle, analysis and chat on the right](docs/workspace.png)
+
+Add your resume, say what you are looking for, and one button searches public job
+boards, scores every posting against your CV, and explains the fit. Your resume and
+every match stay in a SQLite file on your machine, and the analysis is written by an
+LLM running locally.
+
+|  |  |
+|---|---|
+| **Hybrid scoring** | Semantic embeddings blended with keyword and skill overlap |
+| **Online discovery** | Live postings from six public job board APIs, four needing no key |
+| **Local LLM analysis** | Ollama writes the strengths and gaps, then answers follow-ups |
+| **Local-first** | Nothing leaves the machine except the search terms you type |
+
+<img align="right" width="330" alt="The analysis panel: an LLM breakdown of strengths and gaps, with a follow-up conversation below it" src="docs/analysis.png">
+
+### Why it is not just keyword search
+
+A keyword filter cannot tell you that six years of FastAPI answers a posting asking
+for "strong backend focus". Two signals are blended instead: the cosine distance
+between embeddings of your resume and the posting, and the overlap of concrete
+skills and keywords. Each result shows both, so a high score with weak keyword
+overlap reads differently from the reverse.
+
+Click any result and a local model explains the match — what lines up, what is
+missing, and what to change. Ask follow-ups in the panel and it answers with the
+job description and your resume already in context.
+
+<br clear="right">
 
 ## Stack
 
@@ -94,6 +127,8 @@ re-ranked, so each search returns fresh results rather than resurfacing stale on
 
 **Saved sessions** keep the 5 most recent runs; older ones are deleted along with their
 results and chat history.
+
+> Screenshots use a made-up resume and invented postings, not real data.
 
 ## Job sources
 
