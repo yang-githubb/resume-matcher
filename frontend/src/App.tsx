@@ -162,8 +162,8 @@ export default function App() {
         </section>
       </aside>
 
-      <main className="results-area">
-        <header className="results-header">
+      <main className="results-panel">
+        <header className="panel-top">
           <div>
             <h2>Best jobs for you</h2>
             {results.length > 0 ? (
@@ -191,31 +191,32 @@ export default function App() {
             </p>
           </div>
         ) : (
-          <div className="results-split">
-            <div className="results-col">
-              <ResultsPanel
-                results={results}
-                selectedId={selectedResultId}
-                onSelect={setSelectedResultId}
-              />
-            </div>
-
-            <div className="detail-col">
-              <h3>Analysis</h3>
-              {selected?.explanation ? (
-                <pre className="analysis">{selected.explanation}</pre>
-              ) : selected ? (
-                <p className="muted">
-                  No analysis for this job — the top few are analysed by default.
-                </p>
-              ) : (
-                <p className="muted">Select a job to see how it matches.</p>
-              )}
-              <ChatPanel sessionId={rankData?.session_id ?? null} selected={selected} />
-            </div>
-          </div>
+          <ResultsPanel
+            results={results}
+            selectedId={selectedResultId}
+            onSelect={setSelectedResultId}
+          />
         )}
       </main>
+
+      <aside className="detail-panel">
+        <header className="panel-top">
+          <div>
+            <h2>Analysis</h2>
+            {selected ? <p className="muted small-hint">{selected.job_filename}</p> : null}
+          </div>
+        </header>
+
+        {selected?.explanation ? (
+          <pre className="analysis">{selected.explanation}</pre>
+        ) : selected ? (
+          <p className="muted">No analysis for this job — the top few are analysed by default.</p>
+        ) : (
+          <p className="muted">Select a job to see how it matches.</p>
+        )}
+
+        <ChatPanel sessionId={rankData?.session_id ?? null} selected={selected} />
+      </aside>
     </div>
   );
 }
