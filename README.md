@@ -88,7 +88,7 @@ npm install
 On Windows, `scripts/start-dev.ps1` launches both servers. Otherwise use two terminals:
 
 ```bash
-cd backend && .venv/Scripts/activate && python -m uvicorn app.main:app --reload --port 8000
+cd backend && .venv/Scripts/activate && python -m uvicorn app.main:app --reload --port 8010
 ```
 
 ```bash
@@ -97,9 +97,9 @@ cd frontend && npm run dev
 
 | URL | What |
 |-----|------|
-| http://localhost:5173 | Web app |
-| http://localhost:8000/docs | Interactive API docs |
-| http://localhost:8000/health | Status and model config |
+| http://localhost:5273 | Web app |
+| http://localhost:8010/docs | Interactive API docs |
+| http://localhost:8010/health | Status and model config |
 
 > On Windows the `--reload` watcher can miss changes. If an edit does not seem to
 > take effect, restart the backend.
