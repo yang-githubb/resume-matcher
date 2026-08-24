@@ -63,6 +63,52 @@ export function DocumentInput({
 
   const hasSelection = fileNames.length > 0 || pasteText.trim().length > 0;
 
+  // Once a file is chosen the dropbox has nothing left to say, so it collapses
+  // to a row naming what is loaded. Paste keeps its textarea for editing.
+  if (onCleared && mode === "file" && fileNames.length > 0) {
+    return (
+      <div className="loaded-file">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+        </svg>
+        <div className="loaded-file-name">
+          <span>{fileNames.join(", ")}</span>
+          <span className="loaded-file-label">{label}</span>
+        </div>
+        <button
+          type="button"
+          className="linkish"
+          disabled={disabled}
+          onClick={() => inputRef.current?.click()}
+        >
+          Change
+        </button>
+        <button type="button" className="linkish" disabled={disabled} onClick={clearSelection}>
+          Remove
+        </button>
+        <input
+          ref={inputRef}
+          type="file"
+          accept={accept}
+          multiple={multiple}
+          hidden
+          onChange={handleFileChange}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="upload-card">
       <div className="input-header">

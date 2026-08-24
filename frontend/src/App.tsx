@@ -6,6 +6,7 @@ import { DiscoverPanel } from "@/components/DiscoverPanel";
 import { DocumentInput } from "@/components/DocumentInput";
 import { JobLibrary } from "@/components/JobLibrary";
 import { ResultsPanel } from "@/components/ResultsPanel";
+import { Step } from "@/components/Step";
 import {
   createTextDocument,
   exportSessionUrl,
@@ -90,8 +91,7 @@ export default function App() {
           />
         </div>
 
-        <section className="rail-section">
-          <h2>Your resume</h2>
+        <Step index={1} title="Your resume" done={Boolean(resumeSource)}>
           <DocumentInput
             label="Resume"
             docType="resume"
@@ -117,21 +117,18 @@ export default function App() {
             disabled={searching}
           />
           <p className="muted small-hint">One resume at a time — adding another replaces it.</p>
-        </section>
+        </Step>
 
-        <section className="rail-section">
-          <h2>Find jobs</h2>
-          <DiscoverPanel
-            ensureResumeId={ensureResumeId}
-            onBusyChange={setSearching}
-            onResults={(data) => {
-              setRankData(data);
-              setSelectedResultId(data.results[0]?.id ?? null);
-              setError(null);
-            }}
-            onError={setError}
-          />
-        </section>
+        <DiscoverPanel
+          ensureResumeId={ensureResumeId}
+          onBusyChange={setSearching}
+          onResults={(data) => {
+            setRankData(data);
+            setSelectedResultId(data.results[0]?.id ?? null);
+            setError(null);
+          }}
+          onError={setError}
+        />
 
         <section className="rail-section">
           <JobLibrary disabled={searching} />
