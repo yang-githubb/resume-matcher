@@ -1,0 +1,10 @@
+# AI-provenance / watermark guard.
+# Tool: https://github.com/guillaumemeyer/watermarks-remover
+# Auto-strips invisible Unicode, C2PA/EXIF and other AI provenance marks from
+# staged files before each commit. Requires 'pre-commit' installed locally
+# (pip install pre-commit) and 'pre-commit install' run once in the repo.
+repos:
+  - repo: https://github.com/guillaumemeyer/watermarks-remover
+    rev: 4a0fbc312f2e5138c35d270d9db284cc07689930
+    hooks:
+      - id: watermarks-remover-clean
