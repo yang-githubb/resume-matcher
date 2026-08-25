@@ -220,6 +220,7 @@ resume-matcher/
 │   │   └── services/       # Markdown export
 │   ├── fixtures/           # Sample resume and job used by tests
 │   └── tests/
+├── docs/                   # Screenshots used by this README
 ├── frontend/
 │   └── src/
 │       ├── App.tsx         # Layout, health pill, saved sessions
@@ -232,7 +233,7 @@ resume-matcher/
 ## Development
 
 ```bash
-cd backend && .venv/Scripts/activate && pytest -q     # 29 tests
+cd backend && .venv/Scripts/activate && pytest -q     # 30 tests
 cd frontend && npm run lint && npx tsc --noEmit       # lint + typecheck
 cd frontend && npm run build                          # production build
 ```
