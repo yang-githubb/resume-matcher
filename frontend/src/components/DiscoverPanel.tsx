@@ -166,7 +166,7 @@ export function DiscoverPanel({
               </select>
             </label>
 
-            <label className="field">
+            <label className="field field-wide">
               <span>City / area</span>
               <input
                 type="text"
@@ -177,8 +177,11 @@ export function DiscoverPanel({
               />
             </label>
 
-            <label className="field">
-              <span>Jobs to pull ({limit})</span>
+            <label className="field field-slider field-wide">
+              <span>
+                Jobs to pull
+                <span className="field-value">{limit}</span>
+              </span>
               <input
                 type="range"
                 min={5}
@@ -190,8 +193,11 @@ export function DiscoverPanel({
               />
             </label>
 
-            <label className="field">
-              <span>Minimum match ({minScore}%)</span>
+            <label className="field field-slider field-wide">
+              <span>
+                Minimum match
+                <span className="field-value">{minScore > 0 ? `${minScore}%` : "Any"}</span>
+              </span>
               <input
                 type="range"
                 min={0}
