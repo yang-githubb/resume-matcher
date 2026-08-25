@@ -11,6 +11,7 @@
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white">
   <img alt="Ollama" src="https://img.shields.io/badge/Ollama-local%20LLM-black">
   <img alt="SQLite" src="https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-30%20passing-4ade80">
 </p>
 
 ![The Resume Matcher workspace: setup on the left, ranked jobs in the middle, analysis and chat on the right](docs/workspace.png)
@@ -27,9 +28,15 @@ LLM running locally.
 | **Local LLM analysis** | Ollama writes the strengths and gaps, then answers follow-ups |
 | **Local-first** | Nothing leaves the machine except the search terms you type |
 
-<img align="right" width="330" alt="The analysis panel: an LLM breakdown of strengths and gaps, with a follow-up conversation below it" src="docs/analysis.png">
+**Contents** — [Why](#why-it-is-not-just-keyword-search) · [How it works](#how-it-works) ·
+[Stack](#stack) · [Quick start](#quick-start) · [Using it](#using-it) ·
+[Job sources](#job-sources) · [Engineering notes](#engineering-notes) ·
+[Configuration](#configuration) · [API](#api) · [Layout](#project-layout) ·
+[Development](#development)
 
-### Why it is not just keyword search
+## Why it is not just keyword search
+
+<img align="right" width="330" alt="The analysis panel: an LLM breakdown of strengths and gaps, with a follow-up conversation below it" src="docs/analysis.png">
 
 A keyword filter cannot tell you that six years of FastAPI answers a posting asking
 for "strong backend focus". Two signals are blended instead: the cosine distance
@@ -42,6 +49,53 @@ missing, and what to change. Ask follow-ups in the panel and it answers with the
 job description and your resume already in context.
 
 <br clear="right">
+
+## How it works
+
+One click runs the whole pipeline. Boards are queried concurrently, results are
+deduplicated and filtered for relevance, every survivor is scored against your resume,
+and the top few get an LLM write-up — with progress streamed back as it happens
+rather than a spinner.
+
+```mermaid
+flowchart TB
+    UI["React UI"]
+
+    subgraph api["FastAPI backend"]
+        REG["Source registry"]
+        FILT["Dedupe +<br/>relevance filter"]
+        SCORE["Hybrid scorer"]
+        EXPL["Explainer"]
+    end
+
+    subgraph local["Stays on your machine"]
+        EMB["sentence-transformers<br/>all-MiniLM-L6-v2"]
+        OLL["Ollama<br/>llama3.1:8b"]
+        DB[("SQLite")]
+    end
+
+    BOARDS["6 public job board APIs"]
+
+    UI -->|"resume + preferences"| REG
+    REG -->|"concurrent fan-out"| BOARDS
+    BOARDS --> FILT
+    FILT --> SCORE
+    SCORE <--> EMB
+    SCORE --> EXPL
+    EXPL <--> OLL
+    SCORE --> DB
+    EXPL -.->|"SSE progress + results"| UI
+```
+
+### Scoring
+
+```
+overall        = 0.6 x semantic_similarity + 0.4 x keyword_blend
+keyword_blend  = 0.6 x skill_overlap + 0.4 x keyword_overlap
+```
+
+Semantic similarity is the cosine distance between embeddings of the resume and the
+posting. Scores are on a 0–100 scale. Weights are configurable in `backend/.env`.
 
 ## Stack
 
@@ -109,7 +163,7 @@ cd frontend && npm run dev
 1. Add your **resume** — upload a PDF/DOCX or paste the text
 2. Set what you want: role, experience level, city, country, remote-only, how many
    postings to pull, and a minimum match score
-3. Click **Find & rank jobs online**
+3. Click **Find & rank jobs**
 
 That is the only ranking action. It searches the boards, scores every result against
 your resume, writes an analysis for the top few, and links straight to each posting.
@@ -152,21 +206,39 @@ Adzuna serves 18 countries — Singapore yes, Malaysia no. Choosing a country it
 not cover says so plainly rather than quietly returning another country's jobs.
 
 These are official public APIs, not scraped pages. LinkedIn and Indeed block automated
-access and their terms forbid it, so they are not scraped directly. A failing board is
-skipped rather than failing the whole search.
+access and their terms forbid it, so they are not scraped directly.
 
-Postings are filtered for relevance to your keywords — weighted toward the job title,
-since boards match free text loosely — before your resume is scored against them.
+## Engineering notes
 
-## How scoring works
+The parts that took the most thought, and why they ended up this way.
 
-```
-overall        = 0.6 x semantic_similarity + 0.4 x keyword_blend
-keyword_blend  = 0.6 x skill_overlap + 0.4 x keyword_overlap
-```
+**Relevance is weighted toward the job title.** Boards match free text loosely, so a
+search for "python backend engineer" came back full of sales and design roles that
+merely contained the word "engineer". Scoring title hits at 0.7 and body hits at 0.3
+dropped a sales listing to 0.10 while a real backend post scored 0.80.
 
-Semantic similarity is the cosine distance between embeddings of the resume and the
-posting. Scores are on a 0–100 scale. Weights are configurable in `backend/.env`.
+**A failing board is skipped, not fatal.** Six APIs are queried concurrently with
+`asyncio.gather`; one timing out or changing its schema loses that board's results and
+nothing else. Duplicates are collapsed by source ID, then by normalised title and
+company, since the same posting is syndicated to several boards.
+
+**Progress is real, not a fake bar.** The search streams Server-Sent Events through
+`fetch` and a `ReadableStream`, reporting the stage it is actually in — searching,
+collecting, scoring, analysing — because the work takes long enough that a spinner
+would be dishonest about what is happening.
+
+**Degrading beats failing.** No Ollama means analysis falls back to a rule-based
+summary rather than an error; ranking never depended on the LLM. No API keys means the
+four keyless boards still work.
+
+**Derived state is invalidated together.** Replacing a resume clears the rankings it
+produced, drops the stored file, and resets the selection — rankings that describe a
+resume you no longer have are worse than none. Saved sessions are capped at 5 and
+orphaned resumes are pruned on upload, so the database stays bounded.
+
+**Adding a board is one file.** Each source exposes `NAME`, `LABEL`, `REQUIRES_KEY`,
+`is_available()` and `fetch(client, query)`, then goes in `registry.MODULES`.
+Relevance, deduplication, error handling and concurrency are handled for it.
 
 ## Configuration
 
@@ -238,13 +310,10 @@ cd frontend && npm run lint && npx tsc --noEmit       # lint + typecheck
 cd frontend && npm run build                          # production build
 ```
 
-Adding a job board means writing one module in `backend/app/sources/` exposing
-`NAME`, `LABEL`, `REQUIRES_KEY`, `is_available()` and `fetch(client, query)`, then
-listing it in `registry.MODULES`. Relevance filtering, deduplication, error handling
-and concurrency are handled for you.
-
-## Notes
-
 The first search downloads the embedding model (~90MB) and is slower than the rest.
 After that, scoring a batch of postings takes a few seconds on CPU; the analysis step
 is usually what you are waiting for.
+
+## License
+
+[MIT](LICENSE) — free to use, modify and distribute.
