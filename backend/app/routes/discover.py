@@ -82,6 +82,11 @@ class SourceInfo(BaseModel):
     label: str
     requires_key: bool
     available: bool
+    supports_location: bool
+    supports_country: bool
+    # None means every country, not none of them: only sources with a fixed
+    # per-country endpoint enumerate what they cover.
+    countries: list[str] | None = None
 
 
 class DiscoverResponse(RankResponse):

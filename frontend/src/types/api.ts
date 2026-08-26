@@ -65,6 +65,17 @@ export interface SessionSummary {
   created_at: string;
 }
 
+export interface SourceInfo {
+  name: string;
+  label: string;
+  requires_key: boolean;
+  available: boolean;
+  supports_location: boolean;
+  supports_country: boolean;
+  /** null means every country, not none of them. */
+  countries: string[] | null;
+}
+
 export interface SourceReport {
   name: string;
   label: string;

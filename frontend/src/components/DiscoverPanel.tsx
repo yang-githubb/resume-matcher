@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Step } from "@/components/Step";
-import { discoverAndMatch } from "@/lib/api";
+import { discoverAndMatch, getSources } from "@/lib/api";
 import type { SearchProgress } from "@/lib/api";
-import type { DiscoverResponse } from "@/types/api";
+import type { DiscoverResponse, SourceInfo } from "@/types/api";
 
 const COUNTRIES = [
   { code: "my", label: "Malaysia" },
@@ -27,6 +27,16 @@ const COUNTRIES = [
 ];
 
 const SENIORITY = ["", "junior", "mid-level", "senior", "lead", "principal"];
+
+/** "JSearch / Google for Jobs (needs free RapidAPI key)" -> "JSearch". */
+function shortName(source: SourceInfo): string {
+  return source.label.split(/[/(]/)[0].trim();
+}
+
+function covers(source: SourceInfo, country: string): boolean {
+  // A null country list means worldwide, so it covers everything.
+  return source.supports_country && (source.countries === null || source.countries.includes(country));
+}
 
 interface DiscoverPanelProps {
   ensureResumeId: () => Promise<string>;
@@ -55,6 +65,26 @@ export function DiscoverPanel({
   const [refineOpen, setRefineOpen] = useState(false);
 
   const queryClient = useQueryClient();
+  const sourcesQuery = useQuery({ queryKey: ["sources"], queryFn: getSources });
+
+  // Which filters mean anything depends on which boards are switched on, so
+  // the panel asks the registry rather than keeping its own copy of the rules.
+  const support = useMemo(() => {
+    const sources = sourcesQuery.data ?? [];
+    const active = sources.filter((s) => s.available);
+    const enables = (pick: (s: SourceInfo) => boolean) =>
+      sources.filter((s) => !s.available && pick(s)).map(shortName).join(" or ");
+
+    return {
+      known: sources.length > 0,
+      location: active.some((s) => s.supports_location),
+      locationNeeds: enables((s) => s.supports_location),
+      country: active.some((s) => covers(s, country)),
+      countryNeeds: enables((s) => covers(s, country)),
+    };
+  }, [sourcesQuery.data, country]);
+
+  const countryLabel = COUNTRIES.find((c) => c.code === country)?.label ?? country;
 
   const discoverMutation = useMutation({
     onMutate: () => {
@@ -138,6 +168,14 @@ export function DiscoverPanel({
           </button>
         </div>
 
+        {support.known && !support.country ? (
+          <p className="filter-warning">
+            No active source covers {countryLabel}
+            {support.countryNeeds ? ` - add a ${support.countryNeeds} key` : ""}. Results
+            will come from the remote boards instead.
+          </p>
+        ) : null}
+
         {refineOpen ? (
           <div className="refine-fields">
             <label className="field">
@@ -171,10 +209,16 @@ export function DiscoverPanel({
               <input
                 type="text"
                 value={location}
-                placeholder="e.g. Kuala Lumpur"
+                placeholder={support.location ? "e.g. Kuala Lumpur" : "Not available"}
                 onChange={(e) => setLocation(e.target.value)}
-                disabled={pending}
+                disabled={pending || (support.known && !support.location)}
               />
+              {support.known && !support.location ? (
+                <span className="field-note">
+                  No active source filters by city
+                  {support.locationNeeds ? ` - add a ${support.locationNeeds} key` : ""}.
+                </span>
+              ) : null}
             </label>
 
             <label className="field field-slider field-wide">

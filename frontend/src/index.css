@@ -632,6 +632,45 @@ a.btn {
   cursor: default;
 }
 
+/* Why a control is unavailable, said next to the control itself. Selected
+   through .field so it outranks the uppercase label rule on `.field > span`. */
+.field > span.field-note {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--muted);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Sits outside Refine: someone who never expands it still needs to know the
+   country they picked is not being searched. */
+.filter-warning {
+  display: flex;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--warn-border);
+  border-radius: 8px;
+  background: var(--raised);
+  color: var(--warn);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.filter-warning::before {
+  content: "!";
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  margin-top: 0.15rem;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 12px;
+  text-align: center;
+}
+
 .selected-file {
   display: flex;
   align-items: baseline;

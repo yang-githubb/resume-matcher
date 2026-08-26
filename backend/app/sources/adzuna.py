@@ -12,10 +12,14 @@ ENDPOINT = "https://api.adzuna.com/v1/api/jobs/{country}/search/1"
 
 # The 18 countries Adzuna serves. Notably absent: Malaysia and most of
 # South East Asia apart from Singapore.
-COUNTRIES = {
+# Adzuna is per-country: the code goes in the URL, so an uncovered country
+# has no endpoint at all rather than simply returning nothing.
+SUPPORTS_LOCATION = True
+SUPPORTS_COUNTRY = True
+COUNTRIES: frozenset[str] | None = frozenset({
     "gb", "us", "au", "at", "be", "br", "ca", "de", "es",
     "fr", "in", "it", "mx", "nl", "nz", "pl", "sg", "za",
-}
+})
 
 
 class UnsupportedCountry(ValueError):

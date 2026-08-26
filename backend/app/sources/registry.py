@@ -40,6 +40,11 @@ def available_sources() -> list[dict[str, object]]:
             "label": module.LABEL,
             "requires_key": module.REQUIRES_KEY,
             "available": module.is_available(),
+            # Reported so the UI can stop offering filters that would be
+            # silently ignored, rather than hardcoding its own copy of this.
+            "supports_location": module.SUPPORTS_LOCATION,
+            "supports_country": module.SUPPORTS_COUNTRY,
+            "countries": sorted(module.COUNTRIES) if module.COUNTRIES else None,
         }
         for module in MODULES
     ]

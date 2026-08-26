@@ -1,6 +1,8 @@
+import asyncio
+
 import pytest
 
-from app.sources import adzuna, jsearch
+from app.sources import adzuna, arbeitnow, jobicy, jsearch, remoteok, remotive, registry
 from app.sources.base import FetchedJob, JobQuery, html_to_text
 from app.sources.registry import _dedupe
 
@@ -118,3 +120,55 @@ def test_jsearch_salary_needs_both_bounds():
         )
         == "5000-8000 MYR MONTH"
     )
+
+
+def test_every_source_declares_what_it_can_filter_on():
+    # The UI decides which controls to offer from these, so a new board that
+    # forgets to declare them would silently reintroduce dead filters.
+    for module in registry.MODULES:
+        assert isinstance(module.SUPPORTS_LOCATION, bool), module.NAME
+        assert isinstance(module.SUPPORTS_COUNTRY, bool), module.NAME
+        assert module.COUNTRIES is None or isinstance(module.COUNTRIES, frozenset), module.NAME
+        if module.COUNTRIES is not None:
+            assert module.SUPPORTS_COUNTRY, f"{module.NAME} lists countries but ignores country"
+
+
+def test_remote_boards_admit_they_ignore_geography():
+    for module in (remotive, remoteok, arbeitnow, jobicy):
+        assert not module.SUPPORTS_LOCATION, module.NAME
+        assert not module.SUPPORTS_COUNTRY, module.NAME
+
+
+class _Reached(Exception):
+    """Raised in place of a network call, to prove the guard let the query past."""
+
+
+class _FakeClient:
+    async def get(self, *_args, **_kwargs):
+        raise _Reached
+
+
+def test_adzunas_declared_countries_match_what_it_accepts(monkeypatch):
+    # A drifting list would have the UI offer a country the fetch then rejects.
+    monkeypatch.setattr(adzuna.settings, "adzuna_app_id", "id")
+    monkeypatch.setattr(adzuna.settings, "adzuna_app_key", "key")
+    assert adzuna.COUNTRIES is not None and "my" not in adzuna.COUNTRIES
+
+    with pytest.raises(adzuna.UnsupportedCountry):
+        asyncio.run(adzuna.fetch(_FakeClient(), JobQuery(keywords="engineer", country="my")))
+
+    # A declared country must clear the guard and go on to request something.
+    for code in sorted(adzuna.COUNTRIES)[:3]:
+        with pytest.raises(_Reached):
+            asyncio.run(adzuna.fetch(_FakeClient(), JobQuery(keywords="engineer", country=code)))
+
+
+def test_available_sources_reports_capabilities():
+    by_name = {s["name"]: s for s in registry.available_sources()}
+    assert by_name["remotive"]["supports_location"] is False
+    assert by_name["remotive"]["countries"] is None
+    assert by_name["jsearch"]["supports_country"] is True
+    # None means "every country", which is why it is not an empty list.
+    assert by_name["jsearch"]["countries"] is None
+    assert "sg" in by_name["adzuna"]["countries"]
+    assert "my" not in by_name["adzuna"]["countries"]

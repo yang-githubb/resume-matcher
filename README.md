@@ -29,7 +29,7 @@ LLM running locally.
 | **Online discovery** | Live postings from six public job board APIs, four needing no key |
 | **Local LLM analysis** | Ollama writes the strengths and gaps, then answers follow-ups |
 | **Local-first** | Nothing leaves the machine except the search terms you type |
-| **Checked automatically** | Every change runs 35 tests, linting and a full build before it can merge |
+| **Checked automatically** | Every change runs 39 tests, linting and a full build before it can merge |
 
 **Contents** — [Why](#why-it-is-not-just-keyword-search) · [How it works](#how-it-works) ·
 [Stack](#stack) · [Quick start](#quick-start) · [Using it](#using-it) ·
@@ -213,6 +213,13 @@ not cover says so plainly rather than quietly returning another country's jobs.
 These are official public APIs, not scraped pages. LinkedIn and Indeed block automated
 access and their terms forbid it, so they are not scraped directly.
 
+**The app only offers filters it can actually apply.** The four keyless boards list
+remote roles worldwide and expose no geographic filter, so with none of the keyed
+sources configured the city field is disabled and picking a country it cannot search
+says so, rather than quietly returning another region's jobs. Each source declares
+what it supports and the interface reads that from the registry, so a new board
+cannot reintroduce a dead control by accident.
+
 ## Engineering notes
 
 The parts that took the most thought, and why they ended up this way.
@@ -242,7 +249,8 @@ resume you no longer have are worse than none. Saved sessions are capped at 5 an
 orphaned resumes are pruned on upload, so the database stays bounded.
 
 **Adding a board is one file.** Each source exposes `NAME`, `LABEL`, `REQUIRES_KEY`,
-`is_available()` and `fetch(client, query)`, then goes in `registry.MODULES`.
+`SUPPORTS_LOCATION`, `SUPPORTS_COUNTRY`, `COUNTRIES`, `is_available()` and
+`fetch(client, query)`, then goes in `registry.MODULES`.
 Relevance, deduplication, error handling and concurrency are handled for it.
 
 ## Configuration
@@ -310,7 +318,7 @@ resume-matcher/
 ## Development
 
 ```bash
-cd backend && .venv/Scripts/activate && pytest -q     # 30 backend tests
+cd backend && .venv/Scripts/activate && pytest -q     # 34 backend tests
 cd frontend && npm test                               # 5 frontend tests
 cd frontend && npm run lint && npx tsc -b             # lint + typecheck
 cd frontend && npm run build                          # production build
@@ -328,7 +336,7 @@ fails, the badge turns red and the change does not merge.
 
 | Check | What it catches |
 |-------|-----------------|
-| 30 backend tests | Scoring, parsing, job-board adapters, database migrations |
+| 34 backend tests | Scoring, parsing, job-board adapters, database migrations |
 | 5 frontend tests | Progress-stream parsing, including frames split across network chunks |
 | Lint + typecheck | Unused code, type errors, unsafe assumptions |
 | Production build | Anything that compiles in development but breaks when shipped |

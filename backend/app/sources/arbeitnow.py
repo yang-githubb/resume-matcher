@@ -7,6 +7,10 @@ from app.sources.base import FetchedJob, JobQuery, html_to_text
 NAME = "arbeitnow"
 LABEL = "Arbeitnow (EU jobs)"
 REQUIRES_KEY = False
+# Arbeitnow is EU-focused and exposes no geographic filter of its own.
+SUPPORTS_LOCATION = False
+SUPPORTS_COUNTRY = False
+COUNTRIES: frozenset[str] | None = None
 ENDPOINT = "https://www.arbeitnow.com/api/job-board-api"
 
 

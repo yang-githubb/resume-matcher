@@ -10,6 +10,11 @@ from app.sources.base import FetchedJob, JobQuery, html_to_text
 NAME = "jsearch"
 LABEL = "JSearch / Google for Jobs (needs free RapidAPI key)"
 REQUIRES_KEY = True
+# Google for Jobs is worldwide, and takes both a country code and a free-text
+# place folded into the query, so COUNTRIES is None meaning "any".
+SUPPORTS_LOCATION = True
+SUPPORTS_COUNTRY = True
+COUNTRIES: frozenset[str] | None = None
 ENDPOINT = "https://jsearch.p.rapidapi.com/search"
 HOST = "jsearch.p.rapidapi.com"
 

@@ -7,6 +7,7 @@ import type {
   RankResponse,
   SearchPreferences,
   SessionSummary,
+  SourceInfo,
 } from "@/types/api";
 
 const API_BASE = "/api";
@@ -65,6 +66,10 @@ export async function listJobs(
 
 export async function deleteJob(jobId: string): Promise<void> {
   await request(`/documents/${jobId}`, { method: "DELETE" });
+}
+
+export async function getSources(): Promise<SourceInfo[]> {
+  return request<SourceInfo[]>("/discover/sources");
 }
 
 export interface SearchProgress {

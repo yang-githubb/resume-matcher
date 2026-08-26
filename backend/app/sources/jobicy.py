@@ -7,6 +7,11 @@ from app.sources.base import FetchedJob, JobQuery, html_to_text
 NAME = "jobicy"
 LABEL = "Jobicy (remote jobs)"
 REQUIRES_KEY = False
+# These boards list remote roles worldwide and expose no geographic filter,
+# so a city or country would be silently ignored.
+SUPPORTS_LOCATION = False
+SUPPORTS_COUNTRY = False
+COUNTRIES: frozenset[str] | None = None
 ENDPOINT = "https://jobicy.com/api/v2/remote-jobs"
 
 
