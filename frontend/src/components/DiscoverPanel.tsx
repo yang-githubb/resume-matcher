@@ -6,24 +6,20 @@ import { discoverAndMatch, getSources } from "@/lib/api";
 import type { SearchProgress } from "@/lib/api";
 import type { DiscoverResponse, SourceInfo } from "@/types/api";
 
+// The countries the keyed sources actually serve, US and Europe. Offering a
+// country no source can search is what the capability checks below exist to
+// prevent, so the list stays in step with that coverage.
 const COUNTRIES = [
-  { code: "my", label: "Malaysia" },
-  { code: "sg", label: "Singapore" },
-  { code: "id", label: "Indonesia" },
-  { code: "th", label: "Thailand" },
-  { code: "ph", label: "Philippines" },
-  { code: "vn", label: "Vietnam" },
-  { code: "hk", label: "Hong Kong" },
-  { code: "jp", label: "Japan" },
-  { code: "au", label: "Australia" },
-  { code: "nz", label: "New Zealand" },
-  { code: "in", label: "India" },
-  { code: "gb", label: "United Kingdom" },
   { code: "us", label: "United States" },
-  { code: "ca", label: "Canada" },
+  { code: "gb", label: "United Kingdom" },
   { code: "de", label: "Germany" },
-  { code: "nl", label: "Netherlands" },
   { code: "fr", label: "France" },
+  { code: "nl", label: "Netherlands" },
+  { code: "es", label: "Spain" },
+  { code: "it", label: "Italy" },
+  { code: "be", label: "Belgium" },
+  { code: "at", label: "Austria" },
+  { code: "pl", label: "Poland" },
 ];
 
 const SENIORITY = ["", "junior", "mid-level", "senior", "lead", "principal"];
@@ -55,7 +51,7 @@ export function DiscoverPanel({
   const [location, setLocation] = useState("");
   const [seniority, setSeniority] = useState("");
   const [remoteOnly, setRemoteOnly] = useState(true);
-  const [country, setCountry] = useState("my");
+  const [country, setCountry] = useState("us");
   const [limit, setLimit] = useState(25);
   const [minScore, setMinScore] = useState(0);
   const [report, setReport] = useState<DiscoverResponse | null>(null);
@@ -209,7 +205,7 @@ export function DiscoverPanel({
               <input
                 type="text"
                 value={location}
-                placeholder={support.location ? "e.g. Kuala Lumpur" : "Not available"}
+                placeholder={support.location ? "e.g. Berlin" : "Not available"}
                 onChange={(e) => setLocation(e.target.value)}
                 disabled={pending || (support.known && !support.location)}
               />

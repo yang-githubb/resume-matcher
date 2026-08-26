@@ -10,10 +10,10 @@ LABEL = "Adzuna (onsite + remote, needs free API key)"
 REQUIRES_KEY = True
 ENDPOINT = "https://api.adzuna.com/v1/api/jobs/{country}/search/1"
 
-# The 18 countries Adzuna serves. Notably absent: Malaysia and most of
-# South East Asia apart from Singapore.
-# Adzuna is per-country: the code goes in the URL, so an uncovered country
-# has no endpoint at all rather than simply returning nothing.
+# The 18 countries Adzuna serves: most of Western Europe, North America and a
+# handful beyond. Adzuna is per-country - the code goes in the URL - so one
+# outside this list has no endpoint at all rather than quietly returning
+# another country's jobs.
 SUPPORTS_LOCATION = True
 SUPPORTS_COUNTRY = True
 COUNTRIES: frozenset[str] | None = frozenset({

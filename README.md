@@ -197,18 +197,18 @@ results and chat history.
 | RemoteOK | no | Remote roles |
 | Arbeitnow | no | EU roles, including onsite |
 | Jobicy | no | Remote roles |
-| JSearch | free tier | Google for Jobs — **Malaysia**, Asia, worldwide |
-| Adzuna | free tier | Onsite and remote across 18 countries (**not Malaysia**) |
+| JSearch | free tier | Google for Jobs — worldwide |
+| Adzuna | free tier | Onsite and remote across 18 countries |
 
-The four keyless boards work with no setup but are remote-focused.
+The four keyless boards work with no setup but are remote-focused, which is why the
+search targets **the US and Europe** — that is where their listings actually are.
 
-**For Malaysian or Asian listings, use JSearch.** It reads Google for Jobs, so it
-surfaces JobStreet, LinkedIn and Indeed postings. Subscribe to the free tier on
+**For onsite roles, add a key.** JSearch reads Google for Jobs, so it surfaces
+LinkedIn and Indeed postings; take the free tier on
 [RapidAPI](https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch) and set
-`JSEARCH_API_KEY` in `backend/.env`.
-
-Adzuna serves 18 countries — Singapore yes, Malaysia no. Choosing a country it does
-not cover says so plainly rather than quietly returning another country's jobs.
+`JSEARCH_API_KEY` in `backend/.env`. Adzuna adds onsite listings across its 18
+countries, and choosing one it does not cover says so plainly rather than quietly
+returning another country's jobs.
 
 These are official public APIs, not scraped pages. LinkedIn and Indeed block automated
 access and their terms forbid it, so they are not scraped directly.

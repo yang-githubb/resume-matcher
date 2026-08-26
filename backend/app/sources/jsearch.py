@@ -89,7 +89,7 @@ async def fetch(client: httpx.AsyncClient, query: JobQuery) -> list[FetchedJob]:
                 remote=bool(raw.get("job_is_remote")),
                 posted_at=raw.get("job_posted_at_datetime_utc"),
                 salary=_salary(raw),
-                # The publisher (LinkedIn, Indeed, JobStreet...) is useful context.
+                # The publisher (LinkedIn, Indeed and the rest) is useful context.
                 tags=[t for t in [raw.get("job_publisher"), raw.get("job_employment_type")] if t],
             )
         )

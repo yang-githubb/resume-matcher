@@ -7,7 +7,7 @@ const PAYLOAD = {
   preferences: {
     keywords: "python backend engineer",
     remote_only: true,
-    country: "my",
+    country: "us",
     limit: 25,
   },
 };
@@ -89,11 +89,11 @@ describe("discoverAndMatch", () => {
     mockFetch(
       streamingResponse([
         frame({ progress: 0.12, label: "Searching job boards" }),
-        frame({ error: "Adzuna does not cover Malaysia." }),
+        frame({ error: "Adzuna has no JP listings." }),
       ]),
     );
 
-    await expect(discoverAndMatch(PAYLOAD)).rejects.toThrow("Adzuna does not cover Malaysia.");
+    await expect(discoverAndMatch(PAYLOAD)).rejects.toThrow("Adzuna has no JP listings.");
   });
 
   it("fails loudly when the stream ends before any result", async () => {

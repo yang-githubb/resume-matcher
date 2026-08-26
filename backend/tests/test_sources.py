@@ -86,10 +86,10 @@ def test_query_terms_drops_single_characters(keywords: str, expected: list[str])
     assert JobQuery(keywords=keywords).terms == expected
 
 
-def test_adzuna_does_not_claim_malaysia_coverage():
-    """A silent fallback would serve UK jobs to someone searching Malaysia."""
-    assert "my" not in adzuna.COUNTRIES
-    assert "sg" in adzuna.COUNTRIES
+def test_adzuna_does_not_claim_countries_it_lacks():
+    """A silent fallback would serve UK jobs to someone searching elsewhere."""
+    assert "jp" not in adzuna.COUNTRIES
+    assert "us" in adzuna.COUNTRIES
 
 
 def test_jsearch_needs_a_key_to_be_available(monkeypatch):
@@ -100,10 +100,10 @@ def test_jsearch_needs_a_key_to_be_available(monkeypatch):
 
 
 def test_jsearch_builds_location_from_parts_when_absent():
-    assert jsearch._location({"job_location": "Kuala Lumpur, Malaysia"}) == "Kuala Lumpur, Malaysia"
+    assert jsearch._location({"job_location": "Berlin, Germany"}) == "Berlin, Germany"
     assert (
-        jsearch._location({"job_city": "Penang", "job_state": None, "job_country": "MY"})
-        == "Penang, MY"
+        jsearch._location({"job_city": "Lyon", "job_state": None, "job_country": "FR"})
+        == "Lyon, FR"
     )
 
 
@@ -152,10 +152,10 @@ def test_adzunas_declared_countries_match_what_it_accepts(monkeypatch):
     # A drifting list would have the UI offer a country the fetch then rejects.
     monkeypatch.setattr(adzuna.settings, "adzuna_app_id", "id")
     monkeypatch.setattr(adzuna.settings, "adzuna_app_key", "key")
-    assert adzuna.COUNTRIES is not None and "my" not in adzuna.COUNTRIES
+    assert adzuna.COUNTRIES is not None and "jp" not in adzuna.COUNTRIES
 
     with pytest.raises(adzuna.UnsupportedCountry):
-        asyncio.run(adzuna.fetch(_FakeClient(), JobQuery(keywords="engineer", country="my")))
+        asyncio.run(adzuna.fetch(_FakeClient(), JobQuery(keywords="engineer", country="jp")))
 
     # A declared country must clear the guard and go on to request something.
     for code in sorted(adzuna.COUNTRIES)[:3]:
@@ -170,5 +170,5 @@ def test_available_sources_reports_capabilities():
     assert by_name["jsearch"]["supports_country"] is True
     # None means "every country", which is why it is not an empty list.
     assert by_name["jsearch"]["countries"] is None
-    assert "sg" in by_name["adzuna"]["countries"]
-    assert "my" not in by_name["adzuna"]["countries"]
+    assert "us" in by_name["adzuna"]["countries"]
+    assert "jp" not in by_name["adzuna"]["countries"]
