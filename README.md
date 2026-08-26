@@ -11,7 +11,9 @@
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white">
   <img alt="Ollama" src="https://img.shields.io/badge/Ollama-local%20LLM-black">
   <img alt="SQLite" src="https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-30%20passing-4ade80">
+  <a href="https://github.com/yang-githubb/resume-matcher/actions/workflows/ci.yml">
+    <img alt="CI" src="https://github.com/yang-githubb/resume-matcher/actions/workflows/ci.yml/badge.svg">
+  </a>
 </p>
 
 ![The Resume Matcher workspace: setup on the left, ranked jobs in the middle, analysis and chat on the right](docs/workspace.png)
@@ -27,6 +29,7 @@ LLM running locally.
 | **Online discovery** | Live postings from six public job board APIs, four needing no key |
 | **Local LLM analysis** | Ollama writes the strengths and gaps, then answers follow-ups |
 | **Local-first** | Nothing leaves the machine except the search terms you type |
+| **Checked automatically** | Every change runs 35 tests, linting and a full build before it can merge |
 
 **Contents** — [Why](#why-it-is-not-just-keyword-search) · [How it works](#how-it-works) ·
 [Stack](#stack) · [Quick start](#quick-start) · [Using it](#using-it) ·
@@ -307,10 +310,31 @@ resume-matcher/
 ## Development
 
 ```bash
-cd backend && .venv/Scripts/activate && pytest -q     # 30 tests
-cd frontend && npm run lint && npx tsc --noEmit       # lint + typecheck
+cd backend && .venv/Scripts/activate && pytest -q     # 30 backend tests
+cd frontend && npm test                               # 5 frontend tests
+cd frontend && npm run lint && npx tsc -b             # lint + typecheck
 cd frontend && npm run build                          # production build
 ```
+
+### Quality checks
+
+**In plain terms:** the green badge at the top of this page means the code in
+this repository was checked automatically and passed. It is not a claim - it is
+a machine result, re-run on every single change, and anyone can click it to see
+the history.
+
+GitHub Actions runs the following on every push and pull request. If any step
+fails, the badge turns red and the change does not merge.
+
+| Check | What it catches |
+|-------|-----------------|
+| 30 backend tests | Scoring, parsing, job-board adapters, database migrations |
+| 5 frontend tests | Progress-stream parsing, including frames split across network chunks |
+| Lint + typecheck | Unused code, type errors, unsafe assumptions |
+| Production build | Anything that compiles in development but breaks when shipped |
+
+The ranking tests score real embeddings rather than stubbing them out, so a
+change that quietly makes matching worse fails the build instead of shipping.
 
 The first search downloads the embedding model (~90MB) and is slower than the rest.
 After that, scoring a batch of postings takes a few seconds on CPU; the analysis step
