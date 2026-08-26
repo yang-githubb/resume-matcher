@@ -160,6 +160,8 @@ cd frontend && npm run dev
 
 ## Using it
 
+The left rail is a numbered walkthrough — each step ticks green as you complete it.
+
 1. Add your **resume** — upload a PDF/DOCX or paste the text
 2. Set what you want: role, experience level, city, country, remote-only, how many
    postings to pull, and a minimum match score
