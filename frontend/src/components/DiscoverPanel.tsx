@@ -18,7 +18,6 @@ const COUNTRIES = [
   { code: "es", label: "Spain" },
   { code: "it", label: "Italy" },
   { code: "be", label: "Belgium" },
-  { code: "at", label: "Austria" },
   { code: "pl", label: "Poland" },
 ];
 
@@ -50,7 +49,7 @@ export function DiscoverPanel({
   const [keywords, setKeywords] = useState("");
   const [location, setLocation] = useState("");
   const [seniority, setSeniority] = useState("");
-  const [remoteOnly, setRemoteOnly] = useState(true);
+  const [remoteOnly, setRemoteOnly] = useState(false);
   const [country, setCountry] = useState("us");
   const [limit, setLimit] = useState(25);
   const [minScore, setMinScore] = useState(0);
@@ -166,9 +165,9 @@ export function DiscoverPanel({
 
         {support.known && !support.country ? (
           <p className="filter-warning">
-            No active source covers {countryLabel}
-            {support.countryNeeds ? ` - add a ${support.countryNeeds} key` : ""}. Results
-            will come from the remote boards instead.
+            Results will not be limited to {countryLabel}: the active sources list remote
+            roles worldwide and cannot filter by country
+            {support.countryNeeds ? `. Add a ${support.countryNeeds} key for local listings` : ""}.
           </p>
         ) : null}
 

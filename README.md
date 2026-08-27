@@ -29,7 +29,7 @@ LLM running locally.
 | **Online discovery** | Live postings from six public job board APIs, four needing no key |
 | **Local LLM analysis** | Ollama writes the strengths and gaps, then answers follow-ups |
 | **Local-first** | Nothing leaves the machine except the search terms you type |
-| **Checked automatically** | Every change runs 39 tests, linting and a full build before it can merge |
+| **Checked automatically** | Every change runs 43 tests, linting and a full build before it can merge |
 
 **Contents** — [Why](#why-it-is-not-just-keyword-search) · [How it works](#how-it-works) ·
 [Stack](#stack) · [Quick start](#quick-start) · [Using it](#using-it) ·
@@ -193,6 +193,7 @@ results and chat history.
 
 | Source | API key | Covers |
 |--------|---------|--------|
+| **The Muse** | **no** | **Onsite and remote in 9 countries across the US and Europe** |
 | Remotive | no | Remote roles |
 | RemoteOK | no | Remote roles |
 | Arbeitnow | no | EU roles, including onsite |
@@ -200,15 +201,21 @@ results and chat history.
 | JSearch | free tier | Google for Jobs — worldwide |
 | Adzuna | free tier | Onsite and remote across 18 countries |
 
-The four keyless boards work with no setup but are remote-focused, which is why the
-search targets **the US and Europe** — that is where their listings actually are.
+**No key is needed for any of it.** The Muse carries the geography — pick a country
+and results are genuinely narrowed to it — while the other keyless boards add remote
+roles, which are open from anywhere. That is why the search targets **the US and
+Europe**: it is the coverage that exists without asking anyone to sign up.
 
-**For onsite roles, add a key.** JSearch reads Google for Jobs, so it surfaces
-LinkedIn and Indeed postings; take the free tier on
+The Muse filters per city rather than per country, and silently ignores a place it
+does not recognise — returning unfiltered jobs that look filtered. So each country is
+covered by cities verified to return their own postings, and a country without one
+returns nothing rather than quietly serving jobs from anywhere.
+
+**Adding a key widens it.** JSearch reads Google for Jobs, so it surfaces LinkedIn and
+Indeed postings worldwide and enables the city filter; take the free tier on
 [RapidAPI](https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch) and set
 `JSEARCH_API_KEY` in `backend/.env`. Adzuna adds onsite listings across its 18
-countries, and choosing one it does not cover says so plainly rather than quietly
-returning another country's jobs.
+countries.
 
 These are official public APIs, not scraped pages. LinkedIn and Indeed block automated
 access and their terms forbid it, so they are not scraped directly.
@@ -318,7 +325,7 @@ resume-matcher/
 ## Development
 
 ```bash
-cd backend && .venv/Scripts/activate && pytest -q     # 34 backend tests
+cd backend && .venv/Scripts/activate && pytest -q     # 38 backend tests
 cd frontend && npm test                               # 5 frontend tests
 cd frontend && npm run lint && npx tsc -b             # lint + typecheck
 cd frontend && npm run build                          # production build
@@ -336,7 +343,7 @@ fails, the badge turns red and the change does not merge.
 
 | Check | What it catches |
 |-------|-----------------|
-| 34 backend tests | Scoring, parsing, job-board adapters, database migrations |
+| 38 backend tests | Scoring, parsing, job-board adapters, database migrations |
 | 5 frontend tests | Progress-stream parsing, including frames split across network chunks |
 | Lint + typecheck | Unused code, type errors, unsafe assumptions |
 | Production build | Anything that compiles in development but breaks when shipped |

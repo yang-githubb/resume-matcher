@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from app.sources import adzuna, arbeitnow, jobicy, jsearch, remoteok, remotive, registry
+from app.sources import adzuna, arbeitnow, jobicy, jsearch, registry, remoteok, remotive, themuse
 from app.sources.base import FetchedJob, JobQuery, html_to_text
 from app.sources.registry import _dedupe
 
@@ -172,3 +172,43 @@ def test_available_sources_reports_capabilities():
     assert by_name["jsearch"]["countries"] is None
     assert "us" in by_name["adzuna"]["countries"]
     assert "jp" not in by_name["adzuna"]["countries"]
+
+
+def test_themuse_only_claims_countries_it_has_cities_for():
+    # The API ignores a location it does not recognise and returns unfiltered
+    # results, so every declared country needs a city verified to work.
+    assert themuse.COUNTRIES is not None
+    for code in themuse.COUNTRIES:
+        assert themuse._locations(code), f"{code} declared but has no cities"
+    for code in themuse.CITIES:
+        assert code in themuse.COUNTRIES, f"{code} has cities but is not declared"
+
+
+def test_themuse_returns_nothing_rather_than_guessing_a_location():
+    """An uncovered country must not fall through to jobs from anywhere."""
+    assert themuse._locations("jp") == []
+    jobs = asyncio.run(themuse.fetch(_FakeClient(), JobQuery(keywords="engineer", country="jp")))
+    assert jobs == []
+
+
+def test_themuse_maps_keywords_onto_a_category():
+    assert themuse._category("python backend engineer") == "Software Engineering"
+    assert themuse._category("senior data analyst") == "Data and Analytics"
+    # No match is fine: the search simply is not narrowed by category.
+    assert themuse._category("underwater basket weaving") is None
+
+
+def test_themuse_reports_a_remote_posting_as_remote():
+    # A posting can list an office and still be remote; naming the office
+    # would suggest a location the searcher did not ask for.
+    job = themuse._parse({
+        "id": 1,
+        "name": "Backend Engineer",
+        "company": {"name": "Acme"},
+        "contents": "<p>Python and FastAPI work.</p>",
+        "locations": [{"name": "Flexible / Remote"}, {"name": "New York, NY"}],
+        "refs": {"landing_page": "https://example.com/job"},
+    })
+    assert job is not None
+    assert job.remote is True
+    assert job.location == "Remote"
